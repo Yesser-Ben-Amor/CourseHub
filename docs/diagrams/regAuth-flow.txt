@@ -1,0 +1,148 @@
+┌─────────────────────────────────────────────────────────────┐
+│                         FRONTEND                             │
+│  { username: "test", email: "...", password: "geheim" }     │
+└─────────────────────────────────────────────────────────────┘
+                            ↓ HTTP POST (JSON)
+                    RegisterRequest (DTO)
+                    ┌──────────────────┐
+                    │ username         │
+                    │ email            │
+                    │ password         │  ← Mit Passwort (Klartext)
+                    └──────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    AUTH CONTROLLER                           │
+│  @PostMapping("/register")                                   │
+│  register(@Valid @RequestBody RegisterRequest request)       │
+│   Backend-Validierung (@NotBlank, @Email, @Size)          │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+                  authService.register(request)
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                     AUTH SERVICE                             │
+│  @Transactional                                              │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ 1. Email-Check                                         │ │
+│  │    userRepository.existsByEmail(email)                 │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                            ↓                                 │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ 2. Username-Check                                      │ │
+│  │    userRepository.existsByUsername(username)           │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                            ↓                                 │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ 3. UserEntity erstellen                                │ │
+│  │    user.setUsername(...)                               │ │
+│  │    user.setEmail(...)                                  │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                            ↓                                 │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ 4. Passwort hashen (PasswordEncoder)                   │ │
+│  │    passwordHash = passwordEncoder.encode(password)     │ │
+│  │    → "$2a$10$N9qo8uLOickgx2ZMRZoMye..."               │ │
+│  │    user.setPasswordHash(passwordHash)                  │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                            ↓                                 │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ 5. In DB speichern                                     │ │
+│  │    savedUser = userRepository.save(user)               │ │
+│  └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+              userRepository.save(user)
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    USER REPOSITORY                           │
+│  extends JpaRepository<UserEntity, Long>                     │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ existsByEmail(String email)                            │ │
+│  │ → SQL: SELECT COUNT(*) FROM users WHERE email = ?     │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ existsByUsername(String username)                      │ │
+│  │ → SQL: SELECT COUNT(*) FROM users WHERE username = ?  │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ save(UserEntity user)                                  │ │
+│  │ → SQL: INSERT INTO users (username, email,            │ │
+│  │        password_hash, created_at) VALUES (?, ?, ?, ?) │ │
+│  └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+                    JPA / Hibernate
+                    (ORM Framework)
+                            ↓
+                  SQL Statement generieren
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                       HikariCP                               │
+│                  (Connection Pool)                           │
+│  Verwaltet DB-Verbindungen zu MySQL                         │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+                    JDBC Connection
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    MySQL DATENBANK                           │
+│                                                              │
+│  Datenbank: coursehub                                       │
+│  Tabelle: users                                             │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ INSERT INTO users (username, email, password_hash,     │ │
+│  │                    created_at)                         │ │
+│  │ VALUES ('test', 'test@...', '$2a$10$...', NOW())      │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                            ↓                                 │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  User gespeichert                                    │ │
+│  │  ID generiert (AUTO_INCREMENT) → id = 1             │ │
+│  └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+                  ID zurück zu JPA
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    USER REPOSITORY                           │
+│  savedUser = UserEntity mit ID gefüllt                      │
+│  { id: 1, username: "test", email: "...", ... }            │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+              return savedUser zu Service
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                     AUTH SERVICE                             │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ 6. UserResponse erstellen (DTO-Wechsel!)              │ │
+│  │    return new UserResponse(                            │ │
+│  │        savedUser.getId(),        // 1                  │ │
+│  │        savedUser.getUsername(),  // "test"             │ │
+│  │        savedUser.getEmail()      // "test@..."         │ │
+│  │    )                                                   │ │
+│  └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+                     UserResponse (DTO)
+                    ┌──────────────────┐
+                    │ id: 1            │
+                    │ username: "test" │
+                    │ email: "test@..."│  ← OHNE Passwort!
+                    └──────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    AUTH CONTROLLER                           │
+│  return ResponseEntity.status(CREATED).body(response)        │
+└─────────────────────────────────────────────────────────────┘
+                            ↓ HTTP 201 CREATED (JSON)
+┌─────────────────────────────────────────────────────────────┐
+│                         FRONTEND                             │
+│  response.data = { id: 1, username: "test", email: "..." }  │
+│  → setSuccessMessage("Registrierung erfolgreich!")          │
+│  → setTimeout(() => setIsLogin(true), 2000)                 │
+└─────────────────────────────────────────────────────────────┘
