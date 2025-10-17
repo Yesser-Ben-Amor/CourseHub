@@ -1,4 +1,3 @@
 package org.example.backend.dto;
 
-public record UserResponse() {
-}
+public record UserResponse(Long id, String username, String email) {}
