@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './App.css';
 
@@ -20,6 +21,7 @@ interface FormErrors {
 }
 
 function App() {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState<FormData>({
     email: '',
@@ -95,9 +97,33 @@ function App() {
     
     try {
       if (isLogin) {
-        // TODO: Login wird später implementiert
-        console.log('Login:', { email: formData.email });
-        setSuccessMessage('Login wird noch implementiert...');
+        // Login - echter API Call
+        const response = await axios.post(`${API_URL}/login`, {
+          usernameOrEmail: formData.email,
+          password: formData.password
+        });
+        
+        console.log('Login erfolgreich:', response.data);
+        
+        // JWT Token im localStorage speichern
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify({
+          id: response.data.id,
+          username: response.data.username,
+          email: response.data.email
+        }));
+        
+        setSuccessMessage(
+          `Willkommen zurück, ${response.data.username}! Sie werden weitergeleitet...`
+        );
+        
+        // Reset form
+        setFormData({ email: '', username: '', password: '', confirmPassword: '' });
+        
+        // Redirect to Campus
+        setTimeout(() => {
+          navigate('/campus');
+        }, 1500);
       } else {
         // Registrierung - echter API Call
         const response = await axios.post(`${API_URL}/register`, {
@@ -125,13 +151,17 @@ function App() {
         const errorData = error.response.data;
         
         if (errorData.error) {
-          // Einzelner Fehler (z.B. "Email bereits registriert")
-          setErrors({ email: errorData.error });
-        } else if (errorData.username || errorData.email || errorData.password) {
+          // Einzelner Fehler (z.B. "Email bereits registriert" oder "Ungültige Anmeldedaten")
+          if (isLogin) {
+            setErrors({ password: errorData.error });
+          } else {
+            setErrors({ email: errorData.error });
+          }
+        } else if (errorData.username || errorData.email || errorData.password || errorData.usernameOrEmail) {
           // Validierungsfehler von @Valid
           setErrors({
             username: errorData.username,
-            email: errorData.email,
+            email: errorData.email || errorData.usernameOrEmail,
             password: errorData.password
           });
         } else {
@@ -157,12 +187,8 @@ function App() {
   };
 
   const handleSocialLogin = (provider: 'github' | 'google' | 'linkedin') => {
-    // TODO: Implement OAuth flow with backend
-    console.log(`Social login with ${provider}`);
-    alert(`${provider.charAt(0).toUpperCase() + provider.slice(1)} Login wird implementiert...`);
-    
-    // In production, this would redirect to OAuth provider:
-    // window.location.href = `http://localhost:8080/oauth2/authorize/${provider}`;
+    // OAuth2 Flow: Redirect zum Backend OAuth2 Endpoint
+    window.location.href = `http://localhost:8080/oauth2/authorization/${provider}`;
   };
 
   return (
@@ -324,7 +350,8 @@ function App() {
                   Google
                 </button>
 
-                <button 
+                {/* LinkedIn deaktiviert - Company Page erforderlich */}
+                {/* <button 
                   type="button" 
                   className="social-button linkedin"
                   onClick={() => handleSocialLogin('linkedin')}
@@ -334,7 +361,7 @@ function App() {
                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                   </svg>
                   LinkedIn
-                </button>
+                </button> */}
               </div>
             </>
           )}
