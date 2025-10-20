@@ -104,6 +104,13 @@
             <scope>test</scope>
         </dependency>
         
+        <!-- Spring Security Test (csrf(), authentication helpers) -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
         <!-- H2 In-Memory DB für Tests -->
         <dependency>
             <groupId>com.h2database</groupId>
