@@ -25,12 +25,27 @@ interface Teacher {
     createdAt: string;
 }
 
+interface Statistics {
+    totalStudents: number;
+    totalTeachers: number;
+    totalEnrollments: number;
+    totalCertificates: number;
+    totalCourses: number;
+}
+
 function AdminDashboard() {
     const navigate = useNavigate();
     const [activeView, setActiveView] = useState('overview');
     const [adminUser, setAdminUser] = useState('');
     const [students, setStudents] = useState<Student[]>([]);
     const [teachers, setTeachers] = useState<Teacher[]>([]);
+    const [statistics, setStatistics] = useState<Statistics>({
+        totalStudents: 0,
+        totalTeachers: 0,
+        totalEnrollments: 0,
+        totalCertificates: 0,
+        totalCourses: 0
+    });
     const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showTeacherModal, setShowTeacherModal] = useState(false);
@@ -61,6 +76,11 @@ function AdminDashboard() {
 
         setAdminUser(adminUsername || 'Admin');
         
+        // Lade Statistics für Overview
+        if (activeView === 'overview') {
+            loadStatistics();
+        }
+        
         // Lade Studenten wenn View aktiv ist
         if (activeView === 'students') {
             loadStudents();
@@ -79,6 +99,15 @@ function AdminDashboard() {
             setFormData({ username: '', email: '', password: '', confirmPassword: '' });
         }
     }, [activeView, showModal]);
+
+    const loadStatistics = async () => {
+        try {
+            const response = await axios.get('http://localhost:8080/api/admin/statistics');
+            setStatistics(response.data);
+        } catch (error) {
+            console.error('Fehler beim Laden der Statistiken:', error);
+        }
+    };
 
     const loadStudents = async () => {
         setLoading(true);
@@ -376,7 +405,7 @@ function AdminDashboard() {
                                     <img src={lernIcon} alt="Studenten" className="admin-stat-icon-img" />
                                     <div className="admin-stat-info">
                                         <p className="admin-stat-label">Studenten</p>
-                                        <p className="admin-stat-value">0</p>
+                                        <p className="admin-stat-value">{statistics.totalStudents}</p>
                                     </div>
                                 </div>
 
@@ -384,7 +413,7 @@ function AdminDashboard() {
                                     <img src={kroneIcon} alt="Dozenten" className="admin-stat-icon-img" />
                                     <div className="admin-stat-info">
                                         <p className="admin-stat-label">Dozenten</p>
-                                        <p className="admin-stat-value">0</p>
+                                        <p className="admin-stat-value">{statistics.totalTeachers}</p>
                                     </div>
                                 </div>
 
@@ -392,7 +421,7 @@ function AdminDashboard() {
                                     <img src={kurseIcon} alt="Kurse" className="admin-stat-icon-img" />
                                     <div className="admin-stat-info">
                                         <p className="admin-stat-label">Kurse</p>
-                                        <p className="admin-stat-value">1</p>
+                                        <p className="admin-stat-value">{statistics.totalCourses}</p>
                                     </div>
                                 </div>
 
@@ -400,7 +429,7 @@ function AdminDashboard() {
                                     <img src={devopsIcon} alt="Einschreibungen" className="admin-stat-icon-img" />
                                     <div className="admin-stat-info">
                                         <p className="admin-stat-label">Einschreibungen</p>
-                                        <p className="admin-stat-value">0</p>
+                                        <p className="admin-stat-value">{statistics.totalEnrollments}</p>
                                     </div>
                                 </div>
 
@@ -408,7 +437,7 @@ function AdminDashboard() {
                                     <img src={kroneIcon} alt="Zertifikate" className="admin-stat-icon-img" />
                                     <div className="admin-stat-info">
                                         <p className="admin-stat-label">Zertifikate</p>
-                                        <p className="admin-stat-value">0</p>
+                                        <p className="admin-stat-value">{statistics.totalCertificates}</p>
                                     </div>
                                 </div>
                             </div>
