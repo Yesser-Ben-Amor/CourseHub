@@ -109,9 +109,44 @@ function Campus() {
         navigate('/');
     };
 
-    const handleEnroll = (courseName: string) => {
+    const handleEnroll = (courseName: string, courseId: number) => {
         setSelectedCourse(courseName);
+        setSelectedCourseId(courseId);
         setShowModal(true);
+    };
+
+    const showToast = (message: string, type: 'success' | 'error') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
+    const enrollInCourse = async (learningPathId: number, closeModal: boolean = false) => {
+        if (!user || !selectedCourseId) return;
+        
+        setEnrolling(true);
+        try {
+            await axios.post('http://localhost:8080/api/enrollments', {
+                userId: user.id,
+                courseId: selectedCourseId,
+                learningPathId: learningPathId
+            });
+            
+            showToast('Erfolgreich eingeschrieben! Sie finden den Kurs unter "Meine Kurse".', 'success');
+            
+            if (closeModal) {
+                // Warte kurz, damit User die Meldung sieht
+                setTimeout(() => {
+                    handleCloseModal();
+                    setShowDetailView(false);
+                }, 1500);
+            }
+        } catch (error: any) {
+            console.error('Fehler beim Einschreiben:', error);
+            const errorMsg = error.response?.data?.message || 'Fehler beim Einschreiben';
+            showToast(errorMsg, 'error');
+        } finally {
+            setEnrolling(false);
+        }
     };
 
     const handleCloseModal = () => {
@@ -119,16 +154,20 @@ function Campus() {
         setSelectedCourse(null);
     };
 
-    const handleSelectPath = (path: string) => {
-        // Für alle DevOps Lernpfade zeigen wir die Detail-Ansicht
+    const handleSelectPath = async (path: string) => {
+        // Für DevOps Lernpfade zeigen wir die Detail-Ansicht
         if (selectedCourse === 'DevOps' && (path === 'Anfänger' || path === 'Fortgeschrittene' || path === 'Profis')) {
             setSelectedPath(path);
             setShowModal(false);
             setShowDetailView(true);
         } else {
-            console.log(`Eingeschrieben in: ${selectedCourse} - ${path}`);
-            // Hier später API-Call zum Einschreiben
-            handleCloseModal();
+            // Für andere Kurse: Direkt einschreiben
+            // Map path to learningPathId (Anfänger=1, Fortgeschrittene=2, Profis=3)
+            let learningPathId = 1;
+            if (path === 'Fortgeschrittene') learningPathId = 2;
+            if (path === 'Profis') learningPathId = 3;
+            
+            await enrollInCourse(learningPathId);
         }
     };
 
@@ -658,6 +697,24 @@ function Campus() {
             {/* Toast Benachrichtigung */}
             {toast && (
                 <div className={`toast toast-${toast.type}`} style={{
+                    position: 'fixed',
+                    top: '20px',
+                    right: '20px',
+                    padding: '1rem 1.5rem',
+                    borderRadius: '6px',
+                    background: toast.type === 'success' ? '#238636' : '#da3633',
+                    color: '#ffffff',
+                    fontWeight: '500',
+                    zIndex: 9999,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                }}>
+                    {toast.message}
+                </div>
+            )}
+
+            {/* Toast Benachrichtigung */}
+            {toast && (
+                <div style={{
                     position: 'fixed',
                     top: '20px',
                     right: '20px',
