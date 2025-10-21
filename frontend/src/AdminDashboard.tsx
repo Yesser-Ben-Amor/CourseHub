@@ -33,6 +33,13 @@ interface Statistics {
     totalCourses: number;
 }
 
+interface Course {
+    id: number;
+    name: string;
+    description: string;
+    learningPaths?: any[];
+}
+
 function AdminDashboard() {
     const navigate = useNavigate();
     const [activeView, setActiveView] = useState('overview');
@@ -63,6 +70,10 @@ function AdminDashboard() {
     const [teacherView, setTeacherView] = useState<'list' | 'create'>('list');
     const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
     const [confirmDialog, setConfirmDialog] = useState<{message: string, onConfirm: () => void} | null>(null);
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+    const [showCourseModal, setShowCourseModal] = useState(false);
+    const [courseFormData, setCourseFormData] = useState({ name: '', description: '' });
 
     useEffect(() => {
         // Prüfe ob Admin eingeloggt ist
@@ -262,6 +273,68 @@ function AdminDashboard() {
             console.error('Fehler beim Speichern:', error);
             console.error('Error response:', error.response);
             const errorMsg = error.response?.data?.message || 'Fehler beim Speichern des Dozenten';
+            showToast(errorMsg, 'error');
+        }
+    };
+
+    const loadCourses = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get('http://localhost:8080/api/courses');
+            setCourses(response.data);
+        } catch (error) {
+            console.error('Fehler beim Laden der Kurse:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreateCourse = () => {
+        setEditingCourse(null);
+        setCourseFormData({ name: '', description: '' });
+        setShowCourseModal(true);
+    };
+
+    const handleEditCourse = (course: Course) => {
+        setEditingCourse(course);
+        setCourseFormData({ name: course.name, description: course.description });
+        setShowCourseModal(true);
+    };
+
+    const handleDeleteCourse = (id: number) => {
+        setConfirmDialog({
+            message: 'Möchten Sie diesen Kurs wirklich löschen?',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`http://localhost:8080/api/courses/${id}`);
+                    loadCourses();
+                    showToast('Kurs erfolgreich gelöscht!', 'success');
+                } catch (error) {
+                    console.error('Fehler beim Löschen:', error);
+                    showToast('Fehler beim Löschen des Kurses', 'error');
+                }
+                setConfirmDialog(null);
+            }
+        });
+    };
+
+    const handleSubmitCourse = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        try {
+            if (editingCourse) {
+                // Update
+                await axios.put(`http://localhost:8080/api/courses/${editingCourse.id}`, courseFormData);
+            } else {
+                // Create - TODO: Backend needs POST endpoint
+                await axios.post('http://localhost:8080/api/courses', courseFormData);
+            }
+            setShowCourseModal(false);
+            loadCourses();
+            showToast('Kurs erfolgreich gespeichert!', 'success');
+        } catch (error: any) {
+            console.error('Fehler beim Speichern:', error);
+            const errorMsg = error.response?.data?.message || 'Fehler beim Speichern des Kurses';
             showToast(errorMsg, 'error');
         }
     };
@@ -836,7 +909,113 @@ function AdminDashboard() {
 
                     {activeView === 'courses' && (
                         <div className="admin-section">
-                            <p className="admin-placeholder">Kursverwaltung wird hier angezeigt...</p>
+                            <div className="admin-section-header">
+                                <button className="admin-create-button" onClick={handleCreateCourse}>
+                                    + Neuer Kurs
+                                </button>
+                            </div>
+
+                            {loading ? (
+                                <p className="admin-loading">Laden...</p>
+                            ) : (
+                                <div className="admin-table-container">
+                                    <table className="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Kursname</th>
+                                                <th>Beschreibung</th>
+                                                <th>Lernpfade</th>
+                                                <th>Aktionen</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {courses.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={5} className="admin-table-empty">
+                                                        Keine Kurse gefunden
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                courses.map(course => (
+                                                    <tr key={course.id}>
+                                                        <td>{course.id}</td>
+                                                        <td>{course.name}</td>
+                                                        <td>{course.description}</td>
+                                                        <td>{course.learningPaths?.length || 0}</td>
+                                                        <td>
+                                                            <div className="admin-table-actions">
+                                                                <button 
+                                                                    className="admin-action-button edit"
+                                                                    onClick={() => handleEditCourse(course)}
+                                                                >
+                                                                    Bearbeiten
+                                                                </button>
+                                                                <button 
+                                                                    className="admin-action-button delete"
+                                                                    onClick={() => handleDeleteCourse(course.id)}
+                                                                >
+                                                                    Löschen
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+
+                            {/* Course Modal */}
+                            {showCourseModal && (
+                                <div className="admin-modal-overlay" onClick={() => setShowCourseModal(false)}>
+                                    <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+                                        <div className="admin-modal-header">
+                                            <h3>{editingCourse ? 'Kurs bearbeiten' : 'Neuer Kurs'}</h3>
+                                            <button 
+                                                className="admin-modal-close"
+                                                onClick={() => setShowCourseModal(false)}
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                        <form onSubmit={handleSubmitCourse} className="admin-modal-form">
+                                            <div className="admin-form-group">
+                                                <label>Kursname *</label>
+                                                <input
+                                                    type="text"
+                                                    value={courseFormData.name}
+                                                    onChange={(e) => setCourseFormData({...courseFormData, name: e.target.value})}
+                                                    required
+                                                    className="admin-input"
+                                                />
+                                            </div>
+                                            <div className="admin-form-group">
+                                                <label>Beschreibung</label>
+                                                <textarea
+                                                    value={courseFormData.description}
+                                                    onChange={(e) => setCourseFormData({...courseFormData, description: e.target.value})}
+                                                    className="admin-input"
+                                                    rows={4}
+                                                />
+                                            </div>
+                                            <div className="admin-modal-actions">
+                                                <button 
+                                                    type="button" 
+                                                    className="admin-button-secondary"
+                                                    onClick={() => setShowCourseModal(false)}
+                                                >
+                                                    Abbrechen
+                                                </button>
+                                                <button type="submit" className="admin-button-primary">
+                                                    {editingCourse ? 'Aktualisieren' : 'Erstellen'}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
