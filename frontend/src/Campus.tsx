@@ -87,6 +87,19 @@ function Campus() {
         }
     };
 
+    const getCourseIcon = (courseName: string) => {
+        const name = courseName.toLowerCase();
+        if (name.includes('devops')) return devopsIcon;
+        if (name.includes('cyber')) return cyberIcon;
+        if (name.includes('betriebssystem') || name.includes('os')) return bsIcon;
+        if (name.includes('netzwerk') || name.includes('network')) return networkIcon;
+        if (name.includes('web')) return webIcon;
+        if (name.includes('datenbank') || name.includes('database') || name.includes('sql')) return dbIcon;
+        if (name.includes('kurs')) return kurseIcon;
+        // Default Icon
+        return devopsIcon;
+    };
+
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -210,7 +223,7 @@ function Campus() {
                             courses.map(course => (
                                 <div key={course.id} className="course-card">
                                     <div className="course-image">
-                                        <img src={devopsIcon} alt={course.name} style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
+                                        <img src={getCourseIcon(course.name)} alt={course.name} style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
                                     </div>
                                     <div className="course-content">
                                         <h4 className="course-title">{course.name}</h4>
@@ -225,7 +238,7 @@ function Campus() {
                         )}
                     </div>
                 </section>
- 
+            </main>
 
             {/* Modal für Lernpfade */}
             {showModal && (
