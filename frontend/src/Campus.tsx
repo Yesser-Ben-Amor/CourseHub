@@ -202,178 +202,30 @@ function Campus() {
 
                 {/* Empfohlene Kurse */}
                 <section className="recommended-section">
-                    <h3 className="section-title">Empfohlene Kurse</h3>
+                    <h3 className="section-title">Verfügbare Kurse</h3>
                     <div className="courses-grid">
-                        <div className="course-card">
-                            <div className="course-image">
-                                <img src={devopsIcon} alt="DevOps" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
-                            </div>
-                            <div className="course-content">
-                                <h4 className="course-title">DevOps</h4>
-                                <p className="course-instructor">von Prof. Müller</p>
-                                <div className="course-meta">
-                                    <span className="course-duration">12 Wochen</span>
-                                    <span className="course-level">Fortgeschritten</span>
+                        {courses.length === 0 ? (
+                            <p>Keine Kurse verfügbar</p>
+                        ) : (
+                            courses.map(course => (
+                                <div key={course.id} className="course-card">
+                                    <div className="course-image">
+                                        <img src={devopsIcon} alt={course.name} style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
+                                    </div>
+                                    <div className="course-content">
+                                        <h4 className="course-title">{course.name}</h4>
+                                        <p className="course-instructor">{course.description}</p>
+                                        <div className="course-meta">
+                                            <span className="course-duration">{course.learningPaths?.length || 0} Lernpfade</span>
+                                        </div>
+                                        <button className="course-enroll" onClick={() => handleEnroll(course.name)}>Einschreiben</button>
+                                    </div>
                                 </div>
-                                <button className="course-enroll" onClick={() => handleEnroll('DevOps')}>Einschreiben</button>
-                            </div>
-                        </div>
-
-                        <div className="course-card">
-                            <div className="course-image">
-                                <img src={cyberIcon} alt="Cybersecurity" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
-                            </div>
-                            <div className="course-content">
-                                <h4 className="course-title">Cybersecurity</h4>
-                                <p className="course-instructor">von Dr. Schmidt</p>
-                                <div className="course-meta">
-                                    <span className="course-duration">10 Wochen</span>
-                                    <span className="course-level">Fortgeschritten</span>
-                                </div>
-                                <button className="course-enroll" onClick={() => handleEnroll('Cybersecurity')}>Einschreiben</button>
-                            </div>
-                        </div>
-
-                        <div className="course-card">
-                            <div className="course-image">☁️</div>
-                            <div className="course-content">
-                                <h4 className="course-title">Cloud Computing</h4>
-                                <p className="course-instructor">von Prof. Weber</p>
-                                <div className="course-meta">
-                                    <span className="course-duration">8 Wochen</span>
-                                    <span className="course-level">Mittelstufe</span>
-                                </div>
-                                <button className="course-enroll" onClick={() => handleEnroll('Cloud Computing')}>Einschreiben</button>
-                            </div>
-                        </div>
-
-                        <div className="course-card">
-                            <div className="course-image">
-                                <img src={bsIcon} alt="Betriebssysteme" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
-                            </div>
-                            <div className="course-content">
-                                <h4 className="course-title">Betriebssysteme</h4>
-                                <p className="course-instructor">von Dr. Fischer</p>
-                                <div className="course-meta">
-                                    <span className="course-duration">10 Wochen</span>
-                                    <span className="course-level">Mittelstufe</span>
-                                </div>
-                                <button className="course-enroll" onClick={() => handleEnroll('Betriebssysteme')}>Einschreiben</button>
-                            </div>
-                        </div>
-
-                        <div className="course-card">
-                            <div className="course-image">
-                                <img src={networkIcon} alt="Netzwerk" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
-                            </div>
-                            <div className="course-content">
-                                <h4 className="course-title">Netzwerk</h4>
-                                <p className="course-instructor">von Prof. Becker</p>
-                                <div className="course-meta">
-                                    <span className="course-duration">9 Wochen</span>
-                                    <span className="course-level">Mittelstufe</span>
-                                </div>
-                                <button className="course-enroll" onClick={() => handleEnroll('Netzwerk')}>Einschreiben</button>
-                            </div>
-                        </div>
-
-                        <div className="course-card">
-                            <div className="course-image">⚙️</div>
-                            <div className="course-content">
-                                <h4 className="course-title">Softwareengineering</h4>
-                                <p className="course-instructor">von Dr. Hoffmann</p>
-                                <div className="course-meta">
-                                    <span className="course-duration">12 Wochen</span>
-                                    <span className="course-level">Fortgeschritten</span>
-                                </div>
-                                <button className="course-enroll" onClick={() => handleEnroll('Softwareengineering')}>Einschreiben</button>
-                            </div>
-                        </div>
-
-                        <div className="course-card">
-                            <div className="course-image">🧩</div>
-                            <div className="course-content">
-                                <h4 className="course-title">Algorithmus</h4>
-                                <p className="course-instructor">von Prof. Klein</p>
-                                <div className="course-meta">
-                                    <span className="course-duration">10 Wochen</span>
-                                    <span className="course-level">Fortgeschritten</span>
-                                </div>
-                                <button className="course-enroll" onClick={() => handleEnroll('Algorithmus')}>Einschreiben</button>
-                            </div>
-                        </div>
-
-                        <div className="course-card">
-                            <div className="course-image">💡</div>
-                            <div className="course-content">
-                                <h4 className="course-title">Problemsolving</h4>
-                                <p className="course-instructor">von Dr. Wagner</p>
-                                <div className="course-meta">
-                                    <span className="course-duration">8 Wochen</span>
-                                    <span className="course-level">Alle Stufen</span>
-                                </div>
-                                <button className="course-enroll" onClick={() => handleEnroll('Problemsolving')}>Einschreiben</button>
-                            </div>
-                        </div>
-
-                        <div className="course-card">
-                            <div className="course-image">🖥️</div>
-                            <div className="course-content">
-                                <h4 className="course-title">Server & Systemadministration</h4>
-                                <p className="course-instructor">von Prof. Schneider</p>
-                                <div className="course-meta">
-                                    <span className="course-duration">11 Wochen</span>
-                                    <span className="course-level">Fortgeschritten</span>
-                                </div>
-                                <button className="course-enroll" onClick={() => handleEnroll('Server & Systemadministration')}>Einschreiben</button>
-                            </div>
-                        </div>
-
-                        <div className="course-card">
-                            <div className="course-image">
-                                <img src={webIcon} alt="Web Development" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
-                            </div>
-                            <div className="course-content">
-                                <h4 className="course-title">Web Development Grundlagen</h4>
-                                <p className="course-instructor">von Prof. Müller</p>
-                                <div className="course-meta">
-                                    <span className="course-duration">12 Wochen</span>
-                                    <span className="course-level">Anfänger</span>
-                                </div>
-                                <button className="course-enroll" onClick={() => handleEnroll('Web Development')}>Einschreiben</button>
-                            </div>
-                        </div>
-
-                        <div className="course-card">
-                            <div className="course-image">💻</div>
-                            <div className="course-content">
-                                <h4 className="course-title">Java Programmierung</h4>
-                                <p className="course-instructor">von Dr. Schmidt</p>
-                                <div className="course-meta">
-                                    <span className="course-duration">10 Wochen</span>
-                                    <span className="course-level">Fortgeschritten</span>
-                                </div>
-                                <button className="course-enroll" onClick={() => handleEnroll('Java Programmierung')}>Einschreiben</button>
-                            </div>
-                        </div>
-
-                        <div className="course-card">
-                            <div className="course-image">
-                                <img src={dbIcon} alt="Datenbanken & SQL" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
-                            </div>
-                            <div className="course-content">
-                                <h4 className="course-title">Datenbanken & SQL</h4>
-                                <p className="course-instructor">von Prof. Weber</p>
-                                <div className="course-meta">
-                                    <span className="course-duration">8 Wochen</span>
-                                    <span className="course-level">Mittelstufe</span>
-                                </div>
-                                <button className="course-enroll" onClick={() => handleEnroll('Datenbanken & SQL')}>Einschreiben</button>
-                            </div>
-                        </div>
+                            ))
+                        )}
                     </div>
                 </section>
-            </main>
+ 
 
             {/* Modal für Lernpfade */}
             {showModal && (
