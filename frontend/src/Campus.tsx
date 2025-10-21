@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import './Campus.css';
 import devopsIcon from './assets/devops-icon.png';
 import cyberIcon from './assets/cyber.webp';
@@ -17,10 +18,18 @@ interface User {
     email: string;
 }
 
+interface Course {
+    id: number;
+    name: string;
+    description: string;
+    learningPaths?: any[];
+}
+
 function Campus() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [user, setUser] = useState<User | null>(null);
+    const [courses, setCourses] = useState<Course[]>([]);
     const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [showDetailView, setShowDetailView] = useState(false);
@@ -60,11 +69,23 @@ function Campus() {
         try {
             const userData = JSON.parse(userStr);
             setUser(userData);
+            
+            // Lade Kurse vom Backend
+            loadCourses();
         } catch (error) {
             console.error('Error parsing user data:', error);
             navigate('/');
         }
     }, [navigate, searchParams]);
+
+    const loadCourses = async () => {
+        try {
+            const response = await axios.get('http://localhost:8080/api/courses');
+            setCourses(response.data);
+        } catch (error) {
+            console.error('Fehler beim Laden der Kurse:', error);
+        }
+    };
 
     const handleLogout = () => {
         localStorage.removeItem('token');
