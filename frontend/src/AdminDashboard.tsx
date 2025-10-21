@@ -101,6 +101,11 @@ function AdminDashboard() {
         if (activeView === 'teachers') {
             loadTeachers();
         }
+        
+        // Lade Kurse wenn View aktiv ist
+        if (activeView === 'courses') {
+            loadCourses();
+        }
     }, [navigate, activeView]);
 
     useEffect(() => {
@@ -278,9 +283,11 @@ function AdminDashboard() {
     };
 
     const loadCourses = async () => {
+        console.log('loadCourses aufgerufen');
         setLoading(true);
         try {
             const response = await axios.get('http://localhost:8080/api/courses');
+            console.log('Kurse geladen:', response.data);
             setCourses(response.data);
         } catch (error) {
             console.error('Fehler beim Laden der Kurse:', error);

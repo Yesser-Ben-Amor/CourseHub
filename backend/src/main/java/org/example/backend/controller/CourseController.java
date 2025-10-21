@@ -116,6 +116,20 @@ public class CourseController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping
+    public ResponseEntity<Map<String, Object>> createCourse(@RequestBody CourseEntity course) {
+        try {
+            CourseEntity created = courseService.createCourse(course.getName(), course.getDescription());
+            Map<String, Object> courseMap = new HashMap<>();
+            courseMap.put("id", created.getId());
+            courseMap.put("name", created.getName());
+            courseMap.put("description", created.getDescription());
+            return ResponseEntity.ok(courseMap);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteCourse(@PathVariable Long id) {
         try {
