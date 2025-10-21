@@ -115,4 +115,32 @@ public class CourseController {
 
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, String>> deleteCourse(@PathVariable Long id) {
+        try {
+            courseService.deleteCourse(id);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Kurs erfolgreich gelöscht");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Fehler beim Löschen des Kurses: " + e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> updateCourse(@PathVariable Long id, @RequestBody CourseEntity courseUpdate) {
+        try {
+            CourseEntity updated = courseService.updateCourse(id, courseUpdate);
+            Map<String, Object> courseMap = new HashMap<>();
+            courseMap.put("id", updated.getId());
+            courseMap.put("name", updated.getName());
+            courseMap.put("description", updated.getDescription());
+            return ResponseEntity.ok(courseMap);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

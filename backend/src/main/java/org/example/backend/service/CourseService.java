@@ -63,4 +63,26 @@ public class CourseService {
 
         return learningPathRepository.save(learningPath);
     }
+
+    @Transactional
+    public void deleteCourse(Long id) {
+        CourseEntity course = courseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+        courseRepository.delete(course);
+    }
+
+    @Transactional
+    public CourseEntity updateCourse(Long id, CourseEntity courseUpdate) {
+        CourseEntity course = courseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+        
+        if (courseUpdate.getName() != null) {
+            course.setName(courseUpdate.getName());
+        }
+        if (courseUpdate.getDescription() != null) {
+            course.setDescription(courseUpdate.getDescription());
+        }
+        
+        return courseRepository.save(course);
+    }
 }
