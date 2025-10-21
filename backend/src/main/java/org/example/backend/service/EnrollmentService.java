@@ -31,6 +31,12 @@ public class EnrollmentService {
     @Autowired
     private LearningPathRepository learningPathRepository;
 
+    public List<EnrollmentResponse> getAllEnrollments() {
+        return enrollmentRepository.findAll().stream()
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+
     public EnrollmentResponse enrollUser(EnrollmentRequest request) {
         // Prüfe ob bereits eingeschrieben
         if (enrollmentRepository.existsByUserIdAndCourseIdAndLearningPathId(

@@ -40,6 +40,21 @@ interface Course {
     learningPaths?: any[];
 }
 
+interface Enrollment {
+    id: number;
+    userId: number;
+    username: string;
+    courseId: number;
+    courseName: string;
+    learningPathId: number;
+    learningPathLevel: string;
+    learningPathPoints: number;
+    enrolledAt: string;
+    progress: number;
+    completed: boolean;
+    completedAt?: string;
+}
+
 function AdminDashboard() {
     const navigate = useNavigate();
     const [activeView, setActiveView] = useState('overview');
@@ -74,6 +89,15 @@ function AdminDashboard() {
     const [editingCourse, setEditingCourse] = useState<Course | null>(null);
     const [showCourseModal, setShowCourseModal] = useState(false);
     const [courseFormData, setCourseFormData] = useState({ name: '', description: '' });
+    const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+    const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
+    const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(null);
+    const [enrollmentFormData, setEnrollmentFormData] = useState({
+        userId: 0,
+        courseId: 0,
+        learningPathId: 0,
+        progress: 0
+    });
 
     useEffect(() => {
         // Prüfe ob Admin eingeloggt ist
@@ -105,6 +129,11 @@ function AdminDashboard() {
         // Lade Kurse wenn View aktiv ist
         if (activeView === 'courses') {
             loadCourses();
+        }
+        
+        // Lade Einschreibungen wenn View aktiv ist
+        if (activeView === 'enrollments') {
+            loadEnrollments();
         }
     }, [navigate, activeView]);
 
@@ -344,6 +373,81 @@ function AdminDashboard() {
             const errorMsg = error.response?.data?.message || 'Fehler beim Speichern des Kurses';
             showToast(errorMsg, 'error');
         }
+    };
+
+    const loadEnrollments = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get('http://localhost:8080/api/enrollments');
+            setEnrollments(response.data);
+        } catch (error) {
+            console.error('Fehler beim Laden der Einschreibungen:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteEnrollment = (id: number) => {
+        setConfirmDialog({
+            message: 'Möchten Sie diese Einschreibung wirklich löschen?',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`http://localhost:8080/api/enrollments/${id}`);
+                    loadEnrollments();
+                    showToast('Einschreibung erfolgreich gelöscht!', 'success');
+                } catch (error) {
+                    console.error('Fehler beim Löschen:', error);
+                    showToast('Fehler beim Löschen der Einschreibung', 'error');
+                }
+                setConfirmDialog(null);
+            }
+        });
+    };
+
+    const handleEditEnrollment = (enrollment: Enrollment) => {
+        setEditingEnrollment(enrollment);
+        setEnrollmentFormData({
+            userId: enrollment.userId,
+            courseId: enrollment.courseId,
+            learningPathId: enrollment.learningPathId,
+            progress: enrollment.progress
+        });
+        setShowEnrollmentModal(true);
+    };
+
+    const handleSubmitEnrollment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        try {
+            if (editingEnrollment) {
+                // Update Fortschritt
+                await axios.put(`http://localhost:8080/api/enrollments/${editingEnrollment.id}/progress`, {
+                    progress: enrollmentFormData.progress
+                });
+                showToast('Fortschritt erfolgreich aktualisiert!', 'success');
+            } else {
+                // Neue Einschreibung erstellen
+                await axios.post('http://localhost:8080/api/enrollments', enrollmentFormData);
+                showToast('Einschreibung erfolgreich erstellt!', 'success');
+            }
+            setShowEnrollmentModal(false);
+            loadEnrollments();
+        } catch (error: any) {
+            console.error('Fehler beim Speichern:', error);
+            const errorMsg = error.response?.data?.message || 'Fehler beim Speichern';
+            showToast(errorMsg, 'error');
+        }
+    };
+
+    const handleCreateEnrollment = () => {
+        setEditingEnrollment(null);
+        setEnrollmentFormData({
+            userId: 0,
+            courseId: 0,
+            learningPathId: 0,
+            progress: 0
+        });
+        setShowEnrollmentModal(true);
     };
 
     const showToast = (message: string, type: 'success' | 'error') => {
@@ -1028,7 +1132,101 @@ function AdminDashboard() {
 
                     {activeView === 'enrollments' && (
                         <div className="admin-section">
-                            <p className="admin-placeholder">Einschreibungen werden hier angezeigt...</p>
+                            <div className="admin-section-header">
+                                <button className="admin-create-button" onClick={handleCreateEnrollment}>
+                                    + Neue Einschreibung
+                                </button>
+                            </div>
+
+                            {loading ? (
+                                <p className="admin-loading">Laden...</p>
+                            ) : (
+                                <div className="admin-table-container">
+                                    <table className="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Student</th>
+                                                <th>Kurs & Lernpfad</th>
+                                                <th>Fortschritt</th>
+                                                <th>Status</th>
+                                                <th>Datum</th>
+                                                <th>Aktionen</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {enrollments.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={6} className="admin-table-empty">
+                                                        Keine Einschreibungen gefunden
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                enrollments.map(enrollment => (
+                                                    <tr key={enrollment.id}>
+                                                        <td>{enrollment.username}</td>
+                                                        <td>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                                <span style={{ fontWeight: '500' }}>{enrollment.courseName}</span>
+                                                                <span style={{ fontSize: '0.75rem', color: '#8b949e' }}>
+                                                                    {enrollment.learningPathLevel} ({enrollment.learningPathPoints} Punkte)
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                <div style={{
+                                                                    width: '100px',
+                                                                    height: '8px',
+                                                                    background: '#21262d',
+                                                                    borderRadius: '4px',
+                                                                    overflow: 'hidden'
+                                                                }}>
+                                                                    <div style={{
+                                                                        width: `${enrollment.progress}%`,
+                                                                        height: '100%',
+                                                                        background: enrollment.completed ? '#238636' : '#58a6ff',
+                                                                        transition: 'width 0.3s'
+                                                                    }} />
+                                                                </div>
+                                                                <span>{enrollment.progress}%</span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <span style={{
+                                                                padding: '0.25rem 0.5rem',
+                                                                borderRadius: '4px',
+                                                                fontSize: '0.75rem',
+                                                                fontWeight: '500',
+                                                                background: enrollment.completed ? '#238636' : '#58a6ff',
+                                                                color: '#ffffff'
+                                                            }}>
+                                                                {enrollment.completed ? 'Abgeschlossen' : 'Aktiv'}
+                                                            </span>
+                                                        </td>
+                                                        <td>{new Date(enrollment.enrolledAt).toLocaleDateString('de-DE')}</td>
+                                                        <td>
+                                                            <div className="admin-table-actions">
+                                                                <button 
+                                                                    className="admin-action-button edit"
+                                                                    onClick={() => handleEditEnrollment(enrollment)}
+                                                                >
+                                                                    Bearbeiten
+                                                                </button>
+                                                                <button 
+                                                                    className="admin-action-button delete"
+                                                                    onClick={() => handleDeleteEnrollment(enrollment.id)}
+                                                                >
+                                                                    Löschen
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -1053,6 +1251,124 @@ function AdminDashboard() {
                         {toast.type === 'success' ? '✓' : '×'}
                     </span>
                     <span className="admin-toast-message">{toast.message}</span>
+                </div>
+            )}
+
+            {/* Enrollment Modal */}
+            {showEnrollmentModal && (
+                <div className="admin-modal-overlay" onClick={() => setShowEnrollmentModal(false)}>
+                    <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="admin-modal-header">
+                            <h3>{editingEnrollment ? 'Einschreibung bearbeiten' : 'Neue Einschreibung'}</h3>
+                            <button 
+                                className="admin-modal-close"
+                                onClick={() => setShowEnrollmentModal(false)}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmitEnrollment} className="admin-modal-form">
+                            {editingEnrollment ? (
+                                <>
+                                    <div className="admin-form-group">
+                                        <label>Student</label>
+                                        <input
+                                            type="text"
+                                            value={editingEnrollment.username}
+                                            disabled
+                                            className="admin-input"
+                                            style={{ background: '#21262d', cursor: 'not-allowed' }}
+                                        />
+                                    </div>
+                                    <div className="admin-form-group">
+                                        <label>Kurs</label>
+                                        <input
+                                            type="text"
+                                            value={`${editingEnrollment.courseName} - ${editingEnrollment.learningPathLevel}`}
+                                            disabled
+                                            className="admin-input"
+                                            style={{ background: '#21262d', cursor: 'not-allowed' }}
+                                        />
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="admin-form-group">
+                                        <label>User ID *</label>
+                                        <input
+                                            type="number"
+                                            value={enrollmentFormData.userId || ''}
+                                            onChange={(e) => setEnrollmentFormData({...enrollmentFormData, userId: parseInt(e.target.value) || 0})}
+                                            required
+                                            className="admin-input"
+                                            placeholder="z.B. 1"
+                                        />
+                                    </div>
+                                    <div className="admin-form-group">
+                                        <label>Course ID *</label>
+                                        <input
+                                            type="number"
+                                            value={enrollmentFormData.courseId || ''}
+                                            onChange={(e) => setEnrollmentFormData({...enrollmentFormData, courseId: parseInt(e.target.value) || 0})}
+                                            required
+                                            className="admin-input"
+                                            placeholder="z.B. 1"
+                                        />
+                                    </div>
+                                    <div className="admin-form-group">
+                                        <label>Learning Path ID *</label>
+                                        <input
+                                            type="number"
+                                            value={enrollmentFormData.learningPathId || ''}
+                                            onChange={(e) => setEnrollmentFormData({...enrollmentFormData, learningPathId: parseInt(e.target.value) || 0})}
+                                            required
+                                            className="admin-input"
+                                            placeholder="z.B. 1 (Anfänger), 2 (Fortgeschrittene), 3 (Profis)"
+                                        />
+                                    </div>
+                                </>
+                            )}
+                            <div className="admin-form-group">
+                                <label>Fortschritt (%)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={enrollmentFormData.progress}
+                                    onChange={(e) => setEnrollmentFormData({...enrollmentFormData, progress: parseInt(e.target.value) || 0})}
+                                    required
+                                    className="admin-input"
+                                />
+                                <div style={{
+                                    marginTop: '0.5rem',
+                                    width: '100%',
+                                    height: '8px',
+                                    background: '#21262d',
+                                    borderRadius: '4px',
+                                    overflow: 'hidden'
+                                }}>
+                                    <div style={{
+                                        width: `${enrollmentFormData.progress}%`,
+                                        height: '100%',
+                                        background: enrollmentFormData.progress >= 100 ? '#238636' : '#58a6ff',
+                                        transition: 'width 0.3s'
+                                    }} />
+                                </div>
+                            </div>
+                            <div className="admin-modal-actions">
+                                <button 
+                                    type="button" 
+                                    className="admin-button-secondary"
+                                    onClick={() => setShowEnrollmentModal(false)}
+                                >
+                                    Abbrechen
+                                </button>
+                                <button type="submit" className="admin-button-primary">
+                                    {editingEnrollment ? 'Speichern' : 'Erstellen'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
 

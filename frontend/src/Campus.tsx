@@ -448,7 +448,7 @@ function Campus() {
                             <button className="detail-button-secondary" onClick={handleCloseDetailView}>Zurück</button>
                             <button 
                                 className="detail-button-primary"
-                                onClick={() => enrollInCourse(1)}
+                                onClick={() => enrollInCourse(1, true)}
                                 disabled={enrolling}
                             >
                                 {enrolling ? 'Wird eingeschrieben...' : 'Jetzt einschreiben'}
@@ -566,7 +566,7 @@ function Campus() {
                             <button className="detail-button-secondary" onClick={handleCloseDetailView}>Zurück</button>
                             <button 
                                 className="detail-button-primary"
-                                onClick={() => enrollInCourse(2)}
+                                onClick={() => enrollInCourse(2, true)}
                                 disabled={enrolling}
                             >
                                 {enrolling ? 'Wird eingeschrieben...' : 'Jetzt einschreiben'}
@@ -684,7 +684,7 @@ function Campus() {
                             <button className="detail-button-secondary" onClick={handleCloseDetailView}>Zurück</button>
                             <button 
                                 className="detail-button-primary"
-                                onClick={() => enrollInCourse(3)}
+                                onClick={() => enrollInCourse(3, true)}
                                 disabled={enrolling}
                             >
                                 {enrolling ? 'Wird eingeschrieben...' : 'Jetzt einschreiben'}

@@ -18,6 +18,12 @@ public class EnrollmentController {
     @Autowired
     private EnrollmentService enrollmentService;
 
+    @GetMapping
+    public ResponseEntity<List<EnrollmentResponse>> getAllEnrollments() {
+        List<EnrollmentResponse> enrollments = enrollmentService.getAllEnrollments();
+        return ResponseEntity.ok(enrollments);
+    }
+
     @PostMapping
     public ResponseEntity<EnrollmentResponse> enrollUser(@RequestBody EnrollmentRequest request) {
         try {

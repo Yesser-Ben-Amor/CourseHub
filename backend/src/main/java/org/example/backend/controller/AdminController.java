@@ -2,6 +2,7 @@ package org.example.backend.controller;
 
 import org.example.backend.dto.AdminStatisticsResponse;
 import org.example.backend.repository.CourseRepository;
+import org.example.backend.repository.EnrollmentRepository;
 import org.example.backend.repository.TeacherRepository;
 import org.example.backend.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
@@ -15,13 +16,16 @@ public class AdminController {
     private final UserRepository userRepository;
     private final TeacherRepository teacherRepository;
     private final CourseRepository courseRepository;
+    private final EnrollmentRepository enrollmentRepository;
 
     public AdminController(UserRepository userRepository,
                            TeacherRepository teacherRepository,
-                           CourseRepository courseRepository) {
+                           CourseRepository courseRepository,
+                           EnrollmentRepository enrollmentRepository) {
         this.userRepository = userRepository;
         this.teacherRepository = teacherRepository;
         this.courseRepository = courseRepository;
+        this.enrollmentRepository = enrollmentRepository;
     }
 
     @GetMapping("/statistics")
@@ -29,9 +33,9 @@ public class AdminController {
         long totalStudents = userRepository.count();
         long totalTeachers = teacherRepository.count();
         long totalCourses = courseRepository.count();
+        long totalEnrollments = enrollmentRepository.count();
 
-        // TODO: Implementiere Enrollments und Certificates wenn Entities existieren
-        long totalEnrollments = 0;
+        // TODO: Implementiere Certificates wenn Entity existiert
         long totalCertificates = 0;
 
         AdminStatisticsResponse stats = new AdminStatisticsResponse(
