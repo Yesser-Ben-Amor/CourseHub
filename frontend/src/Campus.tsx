@@ -31,9 +31,12 @@ function Campus() {
     const [user, setUser] = useState<User | null>(null);
     const [courses, setCourses] = useState<Course[]>([]);
     const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+    const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [showDetailView, setShowDetailView] = useState(false);
     const [selectedPath, setSelectedPath] = useState<string | null>(null);
+    const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+    const [enrolling, setEnrolling] = useState(false);
 
     useEffect(() => {
         // Prüfe ob Token in URL Query Parameters (OAuth2 Redirect)
@@ -231,7 +234,7 @@ function Campus() {
                                         <div className="course-meta">
                                             <span className="course-duration">{course.learningPaths?.length || 0} Lernpfade</span>
                                         </div>
-                                        <button className="course-enroll" onClick={() => handleEnroll(course.name)}>Einschreiben</button>
+                                        <button className="course-enroll" onClick={() => handleEnroll(course.name, course.id)}>Einschreiben</button>
                                     </div>
                                 </div>
                             ))
@@ -404,7 +407,13 @@ function Campus() {
 
                         <div className="detail-footer">
                             <button className="detail-button-secondary" onClick={handleCloseDetailView}>Zurück</button>
-                            <button className="detail-button-primary">Jetzt einschreiben</button>
+                            <button 
+                                className="detail-button-primary"
+                                onClick={() => enrollInCourse(1)}
+                                disabled={enrolling}
+                            >
+                                {enrolling ? 'Wird eingeschrieben...' : 'Jetzt einschreiben'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -516,7 +525,13 @@ function Campus() {
 
                         <div className="detail-footer">
                             <button className="detail-button-secondary" onClick={handleCloseDetailView}>Zurück</button>
-                            <button className="detail-button-primary">Jetzt einschreiben</button>
+                            <button 
+                                className="detail-button-primary"
+                                onClick={() => enrollInCourse(2)}
+                                disabled={enrolling}
+                            >
+                                {enrolling ? 'Wird eingeschrieben...' : 'Jetzt einschreiben'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -628,9 +643,33 @@ function Campus() {
 
                         <div className="detail-footer">
                             <button className="detail-button-secondary" onClick={handleCloseDetailView}>Zurück</button>
-                            <button className="detail-button-primary">Jetzt einschreiben</button>
+                            <button 
+                                className="detail-button-primary"
+                                onClick={() => enrollInCourse(3)}
+                                disabled={enrolling}
+                            >
+                                {enrolling ? 'Wird eingeschrieben...' : 'Jetzt einschreiben'}
+                            </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Toast Benachrichtigung */}
+            {toast && (
+                <div className={`toast toast-${toast.type}`} style={{
+                    position: 'fixed',
+                    top: '20px',
+                    right: '20px',
+                    padding: '1rem 1.5rem',
+                    borderRadius: '6px',
+                    background: toast.type === 'success' ? '#238636' : '#da3633',
+                    color: '#ffffff',
+                    fontWeight: '500',
+                    zIndex: 9999,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                }}>
+                    {toast.message}
                 </div>
             )}
         </div>
