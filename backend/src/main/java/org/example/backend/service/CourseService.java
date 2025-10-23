@@ -3,7 +3,9 @@ package org.example.backend.service;
 import org.example.backend.entity.CourseEntity;
 import org.example.backend.entity.LearningPathEntity;
 import org.example.backend.repository.CourseRepository;
+import org.example.backend.repository.EnrollmentRepository;
 import org.example.backend.repository.LearningPathRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,9 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final LearningPathRepository learningPathRepository;
+    
+    @Autowired(required = false)
+    private EnrollmentRepository enrollmentRepository;
 
     public CourseService(CourseRepository courseRepository, LearningPathRepository learningPathRepository) {
         this.courseRepository = courseRepository;
@@ -64,10 +69,27 @@ public class CourseService {
         return learningPathRepository.save(learningPath);
     }
 
+    public long getEnrollmentCount(Long courseId) {
+        if (enrollmentRepository != null) {
+            return enrollmentRepository.countByCourseId(courseId);
+        }
+        return 0;
+    }
+
     @Transactional
     public void deleteCourse(Long id) {
         CourseEntity course = courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
+        
+        // Lösche zuerst alle Enrollments für diesen Kurs (CASCADE)
+        if (enrollmentRepository != null) {
+            List<org.example.backend.entity.EnrollmentEntity> enrollments = enrollmentRepository.findByCourseId(id);
+            if (!enrollments.isEmpty()) {
+                enrollmentRepository.deleteAll(enrollments);
+            }
+        }
+        
+        // Dann lösche den Kurs (LearningPaths werden automatisch gelöscht wegen CascadeType.ALL)
         courseRepository.delete(course);
     }
 

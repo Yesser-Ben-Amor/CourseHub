@@ -337,43 +337,62 @@ function AdminDashboard() {
         setShowCourseModal(true);
     };
 
-    const handleDeleteCourse = (id: number) => {
+    const handleDeleteCourse = async (id: number) => {
+    try {
+        // Prüfe ob Enrollments existieren
+        const response = await axios.get(`http://localhost:8080/api/courses/${id}/enrollment-count`);
+        const enrollmentCount = response.data.count;
+
+        let message = 'Möchten Sie diesen Kurs wirklich löschen?';
+        if (enrollmentCount > 0) {
+            message = `WARNUNG: Dieser Kurs hat ${enrollmentCount} aktive Einschreibung(en).\n\nWenn Sie fortfahren, werden ALLE Einschreibungen für diesen Kurs unwiderruflich gelöscht!\n\nMöchten Sie wirklich fortfahren?`;
+        }
+
         setConfirmDialog({
-            message: 'Möchten Sie diesen Kurs wirklich löschen?',
+            message: message,
             onConfirm: async () => {
                 try {
                     await axios.delete(`http://localhost:8080/api/courses/${id}`);
                     loadCourses();
-                    showToast('Kurs erfolgreich gelöscht!', 'success');
-                } catch (error) {
+                    if (enrollmentCount > 0) {
+                        showToast(`Kurs und ${enrollmentCount} Einschreibung(en) erfolgreich gelöscht!`, 'success');
+                    } else {
+                        showToast('Kurs erfolgreich gelöscht!', 'success');
+                    }
+                } catch (error: any) {
                     console.error('Fehler beim Löschen:', error);
-                    showToast('Fehler beim Löschen des Kurses', 'error');
+                    const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Fehler beim Löschen des Kurses';
+                    showToast(errorMsg, 'error');
                 }
                 setConfirmDialog(null);
             }
         });
-    };
+    } catch (error) {
+        console.error('Fehler beim Prüfen der Enrollments:', error);
+        showToast('Fehler beim Prüfen der Einschreibungen', 'error');
+            }
+        };
 
     const handleSubmitCourse = async (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        try {
-            if (editingCourse) {
-                // Update
-                await axios.put(`http://localhost:8080/api/courses/${editingCourse.id}`, courseFormData);
-            } else {
-                // Create - TODO: Backend needs POST endpoint
-                await axios.post('http://localhost:8080/api/courses', courseFormData);
-            }
-            setShowCourseModal(false);
-            loadCourses();
-            showToast('Kurs erfolgreich gespeichert!', 'success');
-        } catch (error: any) {
-            console.error('Fehler beim Speichern:', error);
-            const errorMsg = error.response?.data?.message || 'Fehler beim Speichern des Kurses';
-            showToast(errorMsg, 'error');
+    e.preventDefault();
+    
+    try {
+        if (editingCourse) {
+            // Update
+            await axios.put(`http://localhost:8080/api/courses/${editingCourse.id}`, courseFormData);
+        } else {
+            // Create
+            await axios.post('http://localhost:8080/api/courses', courseFormData);
         }
-    };
+        setShowCourseModal(false);
+        loadCourses();
+        showToast('Kurs erfolgreich gespeichert!', 'success');
+    } catch (error: any) {
+        console.error('Fehler beim Speichern:', error);
+        const errorMsg = error.response?.data?.message || 'Fehler beim Speichern des Kurses';
+        showToast(errorMsg, 'error');
+            }
+        };
 
     const loadEnrollments = async () => {
         setLoading(true);

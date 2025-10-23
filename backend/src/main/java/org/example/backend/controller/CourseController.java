@@ -130,6 +130,14 @@ public class CourseController {
         }
     }
 
+    @GetMapping("/{id}/enrollment-count")
+    public ResponseEntity<Map<String, Long>> getEnrollmentCount(@PathVariable Long id) {
+        long count = courseService.getEnrollmentCount(id);
+        Map<String, Long> response = new HashMap<>();
+        response.put("count", count);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteCourse(@PathVariable Long id) {
         try {
