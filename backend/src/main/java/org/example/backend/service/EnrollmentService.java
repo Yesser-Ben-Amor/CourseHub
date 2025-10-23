@@ -2,6 +2,7 @@ package org.example.backend.service;
 
 import org.example.backend.dto.EnrollmentRequest;
 import org.example.backend.dto.EnrollmentResponse;
+import org.example.backend.dto.UserStatsResponse;
 import org.example.backend.entity.CourseEntity;
 import org.example.backend.entity.EnrollmentEntity;
 import org.example.backend.entity.LearningPathEntity;
@@ -35,6 +36,33 @@ public class EnrollmentService {
         return enrollmentRepository.findAll().stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
+    }
+
+    public UserStatsResponse getUserStats(Long userId) {
+        List<EnrollmentEntity> enrollments = enrollmentRepository.findByUserId(userId);
+        
+        long totalEnrollments = enrollments.size();
+        long completedCourses = enrollments.stream()
+            .filter(e -> Boolean.TRUE.equals(e.getCompleted()))
+            .count();
+        
+        double averageProgress = enrollments.isEmpty() ? 0.0 : 
+            enrollments.stream()
+                .mapToInt(e -> e.getProgress() != null ? e.getProgress() : 0)
+                .average()
+                .orElse(0.0);
+        
+        java.time.LocalDateTime lastActivityLocal = enrollments.stream()
+            .map(EnrollmentEntity::getEnrolledAt)
+            .max(java.time.LocalDateTime::compareTo)
+            .orElse(null);
+        
+        // Konvertiere LocalDateTime zu Instant
+        java.time.Instant lastActivity = lastActivityLocal != null 
+            ? lastActivityLocal.atZone(java.time.ZoneId.systemDefault()).toInstant()
+            : null;
+        
+        return new UserStatsResponse(totalEnrollments, averageProgress, completedCourses, lastActivity);
     }
 
     public EnrollmentResponse enrollUser(EnrollmentRequest request) {

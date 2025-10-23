@@ -2,6 +2,7 @@ package org.example.backend.controller;
 
 import org.example.backend.dto.EnrollmentRequest;
 import org.example.backend.dto.EnrollmentResponse;
+import org.example.backend.dto.UserStatsResponse;
 import org.example.backend.service.EnrollmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,12 @@ public class EnrollmentController {
     public ResponseEntity<List<EnrollmentResponse>> getAllEnrollments() {
         List<EnrollmentResponse> enrollments = enrollmentService.getAllEnrollments();
         return ResponseEntity.ok(enrollments);
+    }
+
+    @GetMapping("/user/{userId}/stats")
+    public ResponseEntity<UserStatsResponse> getUserStats(@PathVariable Long userId) {
+        UserStatsResponse stats = enrollmentService.getUserStats(userId);
+        return ResponseEntity.ok(stats);
     }
 
     @PostMapping

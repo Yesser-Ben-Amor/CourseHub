@@ -25,6 +25,13 @@ interface Course {
     learningPaths?: any[];
 }
 
+interface DashboardStats {
+    totalEnrollments: number;
+    averageProgress: number;
+    completedCourses: number;
+    lastActivity: string | null;
+}
+
 function Campus() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -37,6 +44,12 @@ function Campus() {
     const [selectedPath, setSelectedPath] = useState<string | null>(null);
     const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
     const [enrolling, setEnrolling] = useState(false);
+    const [stats, setStats] = useState<DashboardStats>({
+        totalEnrollments: 0,
+        averageProgress: 0,
+        completedCourses: 0,
+        lastActivity: null
+    });
 
     useEffect(() => {
         // Prüfe ob Token in URL Query Parameters (OAuth2 Redirect)
@@ -75,6 +88,7 @@ function Campus() {
             
             // Lade Kurse vom Backend
             loadCourses();
+            loadStats();
         } catch (error) {
             console.error('Error parsing user data:', error);
             navigate('/');
@@ -87,6 +101,21 @@ function Campus() {
             setCourses(response.data);
         } catch (error) {
             console.error('Fehler beim Laden der Kurse:', error);
+        }
+    };
+
+    const loadStats = async () => {
+        if (!user) {
+            console.log('loadStats: Kein User vorhanden');
+            return;
+        }
+        console.log('loadStats: Lade Stats für User', user.id);
+        try {
+            const response = await axios.get(`http://localhost:8080/api/enrollments/user/${user.id}/stats`);
+            console.log('loadStats: Erhaltene Stats:', response.data);
+            setStats(response.data);
+        } catch (error) {
+            console.error('Fehler beim Laden der Statistiken:', error);
         }
     };
 
@@ -132,6 +161,7 @@ function Campus() {
             });
             
             showToast('Erfolgreich eingeschrieben! Sie finden den Kurs unter "Meine Kurse".', 'success');
+            loadStats(); // Aktualisiere Dashboard-Stats
             
             if (closeModal) {
                 // Warte kurz, damit User die Meldung sieht
@@ -222,7 +252,7 @@ function Campus() {
                             <img src={kurseIcon} alt="Meine Kurse" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
                         </div>
                         <h3 className="card-title">Meine Kurse</h3>
-                        <p className="card-description">0 aktive Kurse</p>
+                        <p className="card-description">{stats.totalEnrollments} aktive Kurse</p>
                         <button className="card-button">Kurse durchsuchen</button>
                     </div>
 
@@ -232,7 +262,7 @@ function Campus() {
                             <img src={lernIcon} alt="Lernfortschritt" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
                         </div>
                         <h3 className="card-title">Lernfortschritt</h3>
-                        <p className="card-description">0% abgeschlossen</p>
+                        <p className="card-description">{Math.round(stats.averageProgress)}% abgeschlossen</p>
                         <button className="card-button">Details anzeigen</button>
                     </div>
 
@@ -242,7 +272,7 @@ function Campus() {
                             <img src={kroneIcon} alt="Zertifikate" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
                         </div>
                         <h3 className="card-title">Zertifikate</h3>
-                        <p className="card-description">0 Zertifikate erworben</p>
+                        <p className="card-description">{stats.completedCourses} Zertifikate erworben</p>
                         <button className="card-button">Alle anzeigen</button>
                     </div>
 
@@ -250,7 +280,12 @@ function Campus() {
                     <div className="dashboard-card">
                         <div className="card-icon">📅</div>
                         <h3 className="card-title">Letzte Aktivitäten</h3>
-                        <p className="card-description">Keine Aktivitäten</p>
+                        <p className="card-description">
+                            {stats.lastActivity 
+                                ? new Date(stats.lastActivity).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })
+                                : 'Keine Aktivitäten'
+                            }
+                        </p>
                         <button className="card-button">Verlauf anzeigen</button>
                     </div>
                 </div>
