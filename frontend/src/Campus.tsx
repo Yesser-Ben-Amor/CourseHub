@@ -18,11 +18,18 @@ interface User {
     email: string;
 }
 
+interface LearningPath {
+    id: number;
+    level: string;
+    description: string;
+    maxPoints: number;
+}
+
 interface Course {
     id: number;
     name: string;
     description: string;
-    learningPaths?: any[];
+    learningPaths?: LearningPath[];
 }
 
 interface DashboardStats {
@@ -39,6 +46,7 @@ function Campus() {
     const [courses, setCourses] = useState<Course[]>([]);
     const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
     const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+    const [selectedCourseData, setSelectedCourseData] = useState<Course | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [showDetailView, setShowDetailView] = useState(false);
     const [selectedPath, setSelectedPath] = useState<string | null>(null);
@@ -138,9 +146,12 @@ function Campus() {
         navigate('/');
     };
 
-    const handleEnroll = (courseName: string, courseId: number) => {
-        setSelectedCourse(courseName);
-        setSelectedCourseId(courseId);
+    const handleEnroll = (course: Course) => {
+        console.log('handleEnroll aufgerufen mit Kurs:', course);
+        console.log('LearningPaths:', course.learningPaths);
+        setSelectedCourse(course.name);
+        setSelectedCourseId(course.id);
+        setSelectedCourseData(course);
         setShowModal(true);
     };
 
@@ -185,19 +196,36 @@ function Campus() {
     };
 
     const handleSelectPath = async (path: string) => {
+        console.log('handleSelectPath aufgerufen mit:', path);
+        console.log('selectedCourse:', selectedCourse);
+        console.log('selectedCourseData:', selectedCourseData);
+        
         // Für DevOps Lernpfade zeigen wir die Detail-Ansicht
         if (selectedCourse === 'DevOps' && (path === 'Anfänger' || path === 'Fortgeschrittene' || path === 'Profis')) {
             setSelectedPath(path);
             setShowModal(false);
             setShowDetailView(true);
         } else {
-            // Für andere Kurse: Direkt einschreiben
-            // Map path to learningPathId (Anfänger=1, Fortgeschrittene=2, Profis=3)
-            let learningPathId = 1;
-            if (path === 'Fortgeschrittene') learningPathId = 2;
-            if (path === 'Profis') learningPathId = 3;
+            // Für andere Kurse: Finde die echte LearningPath-ID aus dem Kurs
+            if (!selectedCourseData?.learningPaths) {
+                console.error('Keine LearningPaths gefunden!');
+                showToast('Keine Lernpfade verfügbar', 'error');
+                return;
+            }
             
-            await enrollInCourse(learningPathId);
+            console.log('Suche nach LearningPath mit level:', path);
+            console.log('Verfügbare LearningPaths:', selectedCourseData.learningPaths);
+            
+            const learningPath = selectedCourseData.learningPaths.find(lp => lp.level === path);
+            console.log('Gefundener LearningPath:', learningPath);
+            
+            if (!learningPath) {
+                showToast(`Lernpfad "${path}" nicht gefunden`, 'error');
+                return;
+            }
+            
+            console.log('Enrolle in LearningPath ID:', learningPath.id);
+            await enrollInCourse(learningPath.id);
         }
     };
 
@@ -308,7 +336,7 @@ function Campus() {
                                         <div className="course-meta">
                                             <span className="course-duration">{course.learningPaths?.length || 0} Lernpfade</span>
                                         </div>
-                                        <button className="course-enroll" onClick={() => handleEnroll(course.name, course.id)}>Einschreiben</button>
+                                        <button className="course-enroll" onClick={() => handleEnroll(course)}>Einschreiben</button>
                                     </div>
                                 </div>
                             ))

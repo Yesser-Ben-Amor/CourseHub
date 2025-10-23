@@ -55,6 +55,32 @@ interface Enrollment {
     completedAt?: string;
 }
 
+interface LearningPath {
+    id: number;
+    level: string;
+    description?: string;
+    points: number;
+    durationWeeks: number;
+    overview: string;
+}
+
+interface LearningContent {
+    id: number;
+    title: string;
+    type: string; // VIDEO, TEXT, PDF, QUIZ
+    description?: string;
+    contentUrl: string;
+    points: number;
+    orderIndex: number;
+}
+
+interface Course {
+    id: number;
+    name: string;
+    description: string;
+    learningPaths?: any[];
+}
+
 function AdminDashboard() {
     const navigate = useNavigate();
     const [activeView, setActiveView] = useState('overview');
@@ -89,6 +115,28 @@ function AdminDashboard() {
     const [editingCourse, setEditingCourse] = useState<Course | null>(null);
     const [showCourseModal, setShowCourseModal] = useState(false);
     const [courseFormData, setCourseFormData] = useState({ name: '', description: '' });
+    const [courseLearningPaths, setCourseLearningPaths] = useState<LearningPath[]>([]);
+    const [showPathForm, setShowPathForm] = useState(false);
+    const [editingPath, setEditingPath] = useState<LearningPath | null>(null);
+    const [pathFormData, setPathFormData] = useState({
+        level: '',
+        description: '',
+        points: 100,
+        durationWeeks: 12,
+        overview: ''
+    });
+    const [selectedPathForContent, setSelectedPathForContent] = useState<LearningPath | null>(null);
+    const [pathContents, setPathContents] = useState<LearningContent[]>([]);
+    const [showContentForm, setShowContentForm] = useState(false);
+    const [editingContent, setEditingContent] = useState<LearningContent | null>(null);
+    const [contentFormData, setContentFormData] = useState({
+        title: '',
+        type: 'VIDEO',
+        description: '',
+        contentUrl: '',
+        points: 10,
+        orderIndex: 1
+    });
     const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
     const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
     const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(null);
@@ -328,12 +376,14 @@ function AdminDashboard() {
     const handleCreateCourse = () => {
         setEditingCourse(null);
         setCourseFormData({ name: '', description: '' });
+        setCourseLearningPaths([]);
         setShowCourseModal(true);
     };
 
     const handleEditCourse = (course: Course) => {
         setEditingCourse(course);
         setCourseFormData({ name: course.name, description: course.description });
+        setCourseLearningPaths(course.learningPaths || []);
         setShowCourseModal(true);
     };
 
@@ -372,6 +422,169 @@ function AdminDashboard() {
         showToast('Fehler beim Prüfen der Einschreibungen', 'error');
             }
         };
+
+    // LearningPath Management
+    const handleAddPath = () => {
+        setEditingPath(null);
+        setPathFormData({
+            level: '',
+            description: '',
+            points: 100,
+            durationWeeks: 12,
+            overview: ''
+        });
+        setShowPathForm(true);
+    };
+
+    const handleEditPath = (path: LearningPath) => {
+        setEditingPath(path);
+        setPathFormData({
+            level: path.level,
+            description: path.description || '',
+            points: path.points,
+            durationWeeks: path.durationWeeks,
+            overview: path.overview
+        });
+        setShowPathForm(true);
+    };
+
+    const handleSavePath = async () => {
+        if (!editingCourse) return;
+        
+        try {
+            if (editingPath) {
+                const response = await axios.put(
+                    `http://localhost:8080/api/courses/${editingCourse.id}/paths/${editingPath.id}`,
+                    pathFormData
+                );
+                setCourseLearningPaths(courseLearningPaths.map(p => 
+                    p.id === editingPath.id ? response.data : p
+                ));
+                showToast('Lernpfad aktualisiert!', 'success');
+            } else {
+                const response = await axios.post(
+                    `http://localhost:8080/api/courses/${editingCourse.id}/paths`,
+                    pathFormData
+                );
+                setCourseLearningPaths([...courseLearningPaths, response.data]);
+                showToast('Lernpfad erstellt!', 'success');
+            }
+            setShowPathForm(false);
+            loadCourses();
+        } catch (error: any) {
+            console.error('Fehler beim Speichern:', error);
+            showToast(error.response?.data?.error || 'Fehler beim Speichern', 'error');
+        }
+    };
+
+    const handleDeletePath = async (pathId: number) => {
+        if (!editingCourse) return;
+        
+        setConfirmDialog({
+            message: 'Möchten Sie diesen Lernpfad wirklich löschen?',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`http://localhost:8080/api/courses/${editingCourse.id}/paths/${pathId}`);
+                    setCourseLearningPaths(courseLearningPaths.filter(p => p.id !== pathId));
+                    showToast('Lernpfad gelöscht!', 'success');
+                    loadCourses();
+                } catch (error) {
+                    console.error('Fehler beim Löschen:', error);
+                    showToast('Fehler beim Löschen', 'error');
+                }
+                setConfirmDialog(null);
+            }
+        });
+    };
+
+    // LearningContent Management
+    const handleManageContent = async (path: LearningPath) => {
+        setSelectedPathForContent(path);
+        try {
+            const response = await axios.get(
+                `http://localhost:8080/api/courses/${editingCourse?.id}/paths/${path.id}/contents`
+            );
+            setPathContents(response.data);
+        } catch (error) {
+            console.error('Fehler beim Laden der Inhalte:', error);
+            setPathContents([]);
+        }
+    };
+
+    const handleAddContent = () => {
+        setEditingContent(null);
+        setContentFormData({
+            title: '',
+            type: 'VIDEO',
+            description: '',
+            contentUrl: '',
+            points: 10,
+            orderIndex: pathContents.length + 1
+        });
+        setShowContentForm(true);
+    };
+
+    const handleEditContent = (content: LearningContent) => {
+        setEditingContent(content);
+        setContentFormData({
+            title: content.title,
+            type: content.type,
+            description: content.description || '',
+            contentUrl: content.contentUrl,
+            points: content.points,
+            orderIndex: content.orderIndex
+        });
+        setShowContentForm(true);
+    };
+
+    const handleSaveContent = async () => {
+        if (!editingCourse || !selectedPathForContent) return;
+        
+        try {
+            if (editingContent) {
+                const response = await axios.put(
+                    `http://localhost:8080/api/courses/${editingCourse.id}/paths/${selectedPathForContent.id}/contents/${editingContent.id}`,
+                    contentFormData
+                );
+                setPathContents(pathContents.map(c => 
+                    c.id === editingContent.id ? response.data : c
+                ));
+                showToast('Inhalt aktualisiert!', 'success');
+            } else {
+                const response = await axios.post(
+                    `http://localhost:8080/api/courses/${editingCourse.id}/paths/${selectedPathForContent.id}/contents`,
+                    contentFormData
+                );
+                setPathContents([...pathContents, response.data]);
+                showToast('Inhalt erstellt!', 'success');
+            }
+            setShowContentForm(false);
+        } catch (error: any) {
+            console.error('Fehler beim Speichern:', error);
+            showToast(error.response?.data?.error || 'Fehler beim Speichern', 'error');
+        }
+    };
+
+    const handleDeleteContent = async (contentId: number) => {
+        if (!editingCourse || !selectedPathForContent) return;
+        
+        setConfirmDialog({
+            message: 'Möchten Sie diesen Inhalt wirklich löschen?',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(
+                        `http://localhost:8080/api/courses/${editingCourse.id}/paths/${selectedPathForContent.id}/contents/${contentId}`
+                    );
+                    setPathContents(pathContents.filter(c => c.id !== contentId));
+                    showToast('Inhalt gelöscht!', 'success');
+                } catch (error) {
+                    console.error('Fehler beim Löschen:', error);
+                    showToast('Fehler beim Löschen', 'error');
+                }
+                setConfirmDialog(null);
+            }
+        });
+    };
 
     const handleSubmitCourse = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1130,6 +1343,93 @@ function AdminDashboard() {
                                                     rows={4}
                                                 />
                                             </div>
+
+                                            {editingCourse && (
+                                                <div className="admin-form-group">
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                        <label>Lernpfade ({courseLearningPaths.length})</label>
+                                                        <button 
+                                                            type="button"
+                                                            className="admin-button-primary"
+                                                            onClick={handleAddPath}
+                                                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
+                                                        >
+                                                            + Lernpfad
+                                                        </button>
+                                                    </div>
+                                                    {courseLearningPaths.length === 0 ? (
+                                                        <p style={{ color: '#8b949e', fontSize: '0.875rem' }}>Keine Lernpfade vorhanden</p>
+                                                    ) : (
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                            {courseLearningPaths.map(path => (
+                                                                <div key={path.id} style={{
+                                                                    padding: '0.75rem',
+                                                                    background: '#21262d',
+                                                                    borderRadius: '6px',
+                                                                    border: '1px solid #30363d'
+                                                                }}>
+                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                                                        <div style={{ flex: 1 }}>
+                                                                            <div style={{ fontWeight: '500', marginBottom: '0.25rem' }}>{path.level}</div>
+                                                                            <div style={{ fontSize: '0.75rem', color: '#8b949e' }}>
+                                                                                {path.points} Punkte • {path.durationWeeks} Wochen
+                                                                            </div>
+                                                                        </div>
+                                                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleManageContent(path)}
+                                                                                style={{
+                                                                                    padding: '0.25rem 0.5rem',
+                                                                                    fontSize: '0.75rem',
+                                                                                    background: '#1f6feb',
+                                                                                    color: '#ffffff',
+                                                                                    border: 'none',
+                                                                                    borderRadius: '4px',
+                                                                                    cursor: 'pointer'
+                                                                                }}
+                                                                            >
+                                                                                Inhalte
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleEditPath(path)}
+                                                                                style={{
+                                                                                    padding: '0.25rem 0.5rem',
+                                                                                    fontSize: '0.75rem',
+                                                                                    background: '#238636',
+                                                                                    color: '#ffffff',
+                                                                                    border: 'none',
+                                                                                    borderRadius: '4px',
+                                                                                    cursor: 'pointer'
+                                                                                }}
+                                                                            >
+                                                                                Bearbeiten
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleDeletePath(path.id)}
+                                                                                style={{
+                                                                                    padding: '0.25rem 0.5rem',
+                                                                                    fontSize: '0.75rem',
+                                                                                    background: '#da3633',
+                                                                                    color: '#ffffff',
+                                                                                    border: 'none',
+                                                                                    borderRadius: '4px',
+                                                                                    cursor: 'pointer'
+                                                                                }}
+                                                                            >
+                                                                                Löschen
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
                                             <div className="admin-modal-actions">
                                                 <button 
                                                     type="button" 
@@ -1143,6 +1443,138 @@ function AdminDashboard() {
                                                 </button>
                                             </div>
                                         </form>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* LearningPath Form Modal */}
+                            {showPathForm && (
+                                <div className="admin-modal-overlay" onClick={() => setShowPathForm(false)}>
+                                    <div className="admin-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                                        <div className="admin-modal-header">
+                                            <h3>{editingPath ? 'Lernpfad bearbeiten' : 'Neuer Lernpfad'}</h3>
+                                            <button className="admin-modal-close" onClick={() => setShowPathForm(false)}>×</button>
+                                        </div>
+                                        <div className="admin-modal-form">
+                                            <div className="admin-form-group">
+                                                <label>Level *</label>
+                                                <select value={pathFormData.level} onChange={(e) => setPathFormData({...pathFormData, level: e.target.value})} required className="admin-input">
+                                                    <option value="">Wählen...</option>
+                                                    <option value="Anfänger">Anfänger</option>
+                                                    <option value="Fortgeschrittene">Fortgeschrittene</option>
+                                                    <option value="Profis">Profis</option>
+                                                </select>
+                                            </div>
+                                            <div className="admin-form-group">
+                                                <label>Punkte *</label>
+                                                <input type="number" value={pathFormData.points} onChange={(e) => setPathFormData({...pathFormData, points: parseInt(e.target.value) || 0})} required className="admin-input" />
+                                            </div>
+                                            <div className="admin-form-group">
+                                                <label>Dauer (Wochen) *</label>
+                                                <input type="number" value={pathFormData.durationWeeks} onChange={(e) => setPathFormData({...pathFormData, durationWeeks: parseInt(e.target.value) || 0})} required className="admin-input" />
+                                            </div>
+                                            <div className="admin-form-group">
+                                                <label>Übersicht *</label>
+                                                <textarea value={pathFormData.overview} onChange={(e) => setPathFormData({...pathFormData, overview: e.target.value})} required className="admin-input" rows={3} placeholder="Kurze Beschreibung des Lernpfads..." />
+                                            </div>
+                                            <div className="admin-modal-actions">
+                                                <button type="button" className="admin-button-secondary" onClick={() => setShowPathForm(false)}>Abbrechen</button>
+                                                <button type="button" className="admin-button-primary" onClick={handleSavePath}>{editingPath ? 'Aktualisieren' : 'Erstellen'}</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Content Management Modal */}
+                            {selectedPathForContent && (
+                                <div className="admin-modal-overlay" onClick={() => setSelectedPathForContent(null)}>
+                                    <div className="admin-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px' }}>
+                                        <div className="admin-modal-header">
+                                            <h3>Inhalte verwalten: {selectedPathForContent.level}</h3>
+                                            <button className="admin-modal-close" onClick={() => setSelectedPathForContent(null)}>×</button>
+                                        </div>
+                                        <div className="admin-modal-form">
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                <h4>Lerninhalte ({pathContents.length})</h4>
+                                                <button type="button" className="admin-button-primary" onClick={handleAddContent} style={{ padding: '0.5rem 1rem' }}>+ Inhalt hinzufügen</button>
+                                            </div>
+                                            {pathContents.length === 0 ? (
+                                                <p style={{ color: '#8b949e', textAlign: 'center', padding: '2rem' }}>Keine Inhalte vorhanden</p>
+                                            ) : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                                    {pathContents.map(content => (
+                                                        <div key={content.id} style={{ padding: '1rem', background: '#21262d', borderRadius: '6px', border: '1px solid #30363d' }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                                                <div style={{ flex: 1 }}>
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                                                        <span style={{ fontWeight: '500', fontSize: '1rem' }}>{content.title}</span>
+                                                                        <span style={{ padding: '0.125rem 0.5rem', background: '#1f6feb', borderRadius: '4px', fontSize: '0.75rem' }}>{content.type}</span>
+                                                                        <span style={{ color: '#8b949e', fontSize: '0.75rem' }}>{content.points} Punkte</span>
+                                                                    </div>
+                                                                    {content.description && <p style={{ fontSize: '0.875rem', color: '#8b949e', marginBottom: '0.5rem' }}>{content.description}</p>}
+                                                                    <p style={{ fontSize: '0.75rem', color: '#58a6ff', wordBreak: 'break-all' }}>{content.contentUrl}</p>
+                                                                </div>
+                                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                                    <button type="button" onClick={() => handleEditContent(content)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#238636', color: '#ffffff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Bearbeiten</button>
+                                                                    <button type="button" onClick={() => handleDeleteContent(content.id)} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#da3633', color: '#ffffff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Löschen</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Content Form Modal */}
+                            {showContentForm && (
+                                <div className="admin-modal-overlay" onClick={() => setShowContentForm(false)}>
+                                    <div className="admin-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                                        <div className="admin-modal-header">
+                                            <h3>{editingContent ? 'Inhalt bearbeiten' : 'Neuer Inhalt'}</h3>
+                                            <button className="admin-modal-close" onClick={() => setShowContentForm(false)}>×</button>
+                                        </div>
+                                        <div className="admin-modal-form">
+                                            <div className="admin-form-group">
+                                                <label>Titel *</label>
+                                                <input type="text" value={contentFormData.title} onChange={(e) => setContentFormData({...contentFormData, title: e.target.value})} required className="admin-input" placeholder="z.B. Einführung in DevOps" />
+                                            </div>
+                                            <div className="admin-form-group">
+                                                <label>Typ *</label>
+                                                <select value={contentFormData.type} onChange={(e) => setContentFormData({...contentFormData, type: e.target.value})} required className="admin-input">
+                                                    <option value="VIDEO">Video</option>
+                                                    <option value="TEXT">Text</option>
+                                                    <option value="PDF">PDF</option>
+                                                    <option value="QUIZ">Quiz</option>
+                                                </select>
+                                            </div>
+                                            <div className="admin-form-group">
+                                                <label>URL *</label>
+                                                <input type="url" value={contentFormData.contentUrl} onChange={(e) => setContentFormData({...contentFormData, contentUrl: e.target.value})} required className="admin-input" placeholder="https://www.youtube.com/watch?v=..." />
+                                                <small style={{ color: '#8b949e', fontSize: '0.75rem' }}>YouTube-Link, PDF-URL, etc.</small>
+                                            </div>
+                                            <div className="admin-form-group">
+                                                <label>Beschreibung</label>
+                                                <textarea value={contentFormData.description} onChange={(e) => setContentFormData({...contentFormData, description: e.target.value})} className="admin-input" rows={3} placeholder="Optionale Beschreibung..." />
+                                            </div>
+                                            <div className="admin-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                                <div className="admin-form-group">
+                                                    <label>Punkte *</label>
+                                                    <input type="number" value={contentFormData.points} onChange={(e) => setContentFormData({...contentFormData, points: parseInt(e.target.value) || 0})} required className="admin-input" min="0" />
+                                                </div>
+                                                <div className="admin-form-group">
+                                                    <label>Reihenfolge *</label>
+                                                    <input type="number" value={contentFormData.orderIndex} onChange={(e) => setContentFormData({...contentFormData, orderIndex: parseInt(e.target.value) || 1})} required className="admin-input" min="1" />
+                                                </div>
+                                            </div>
+                                            <div className="admin-modal-actions">
+                                                <button type="button" className="admin-button-secondary" onClick={() => setShowContentForm(false)}>Abbrechen</button>
+                                                <button type="button" className="admin-button-primary" onClick={handleSaveContent}>{editingContent ? 'Aktualisieren' : 'Erstellen'}</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             )}

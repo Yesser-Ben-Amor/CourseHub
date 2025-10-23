@@ -2,9 +2,11 @@ package org.example.backend.service;
 
 import org.example.backend.entity.CourseEntity;
 import org.example.backend.entity.LearningPathEntity;
+import org.example.backend.entity.LearningContentEntity;
 import org.example.backend.repository.CourseRepository;
 import org.example.backend.repository.EnrollmentRepository;
 import org.example.backend.repository.LearningPathRepository;
+import org.example.backend.repository.LearningContentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,13 +19,17 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final LearningPathRepository learningPathRepository;
-    
-    @Autowired(required = false)
-    private EnrollmentRepository enrollmentRepository;
+    private final EnrollmentRepository enrollmentRepository;
+    private final LearningContentRepository learningContentRepository;
 
-    public CourseService(CourseRepository courseRepository, LearningPathRepository learningPathRepository) {
+    public CourseService(CourseRepository courseRepository, 
+                         LearningPathRepository learningPathRepository,
+                         @Autowired(required = false) EnrollmentRepository enrollmentRepository,
+                         LearningContentRepository learningContentRepository) {
         this.courseRepository = courseRepository;
         this.learningPathRepository = learningPathRepository;
+        this.enrollmentRepository = enrollmentRepository;
+        this.learningContentRepository = learningContentRepository;
     }
 
     public List<CourseEntity> getAllCourses() {
@@ -106,5 +112,51 @@ public class CourseService {
         }
         
         return courseRepository.save(course);
+    }
+
+    // LearningContent CRUD
+    public List<LearningContentEntity> getContentsByLearningPathId(Long learningPathId) {
+        return learningContentRepository.findByLearningPathIdOrderByOrderIndexAsc(learningPathId);
+    }
+
+    @Transactional
+    public LearningContentEntity createContent(Long learningPathId, String title, String type, 
+                                               String description, String contentUrl, 
+                                               Integer points, Integer orderIndex) {
+        LearningPathEntity learningPath = learningPathRepository.findById(learningPathId)
+                .orElseThrow(() -> new RuntimeException("Learning path not found"));
+        
+        LearningContentEntity content = new LearningContentEntity();
+        content.setLearningPath(learningPath);
+        content.setTitle(title);
+        content.setType(type);
+        content.setDescription(description);
+        content.setContentUrl(contentUrl);
+        content.setPoints(points);
+        content.setOrderIndex(orderIndex);
+        
+        return learningContentRepository.save(content);
+    }
+
+    @Transactional
+    public LearningContentEntity updateContent(Long contentId, String title, String type,
+                                               String description, String contentUrl,
+                                               Integer points, Integer orderIndex) {
+        LearningContentEntity content = learningContentRepository.findById(contentId)
+                .orElseThrow(() -> new RuntimeException("Content not found"));
+        
+        content.setTitle(title);
+        content.setType(type);
+        content.setDescription(description);
+        content.setContentUrl(contentUrl);
+        content.setPoints(points);
+        content.setOrderIndex(orderIndex);
+        
+        return learningContentRepository.save(content);
+    }
+
+    @Transactional
+    public void deleteContent(Long contentId) {
+        learningContentRepository.deleteById(contentId);
     }
 }
