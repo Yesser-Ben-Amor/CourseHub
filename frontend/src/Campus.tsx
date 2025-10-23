@@ -96,7 +96,7 @@ function Campus() {
             
             // Lade Kurse vom Backend
             loadCourses();
-            loadStats();
+            loadStats(userData.id);
         } catch (error) {
             console.error('Error parsing user data:', error);
             navigate('/');
@@ -112,14 +112,15 @@ function Campus() {
         }
     };
 
-    const loadStats = async () => {
-        if (!user) {
+    const loadStats = async (userId?: number) => {
+        const id = userId || user?.id;
+        if (!id) {
             console.log('loadStats: Kein User vorhanden');
             return;
         }
-        console.log('loadStats: Lade Stats für User', user.id);
+        console.log('loadStats: Lade Stats für User', id);
         try {
-            const response = await axios.get(`http://localhost:8080/api/enrollments/user/${user.id}/stats`);
+            const response = await axios.get(`http://localhost:8080/api/enrollments/user/${id}/stats`);
             console.log('loadStats: Erhaltene Stats:', response.data);
             setStats(response.data);
         } catch (error) {
@@ -172,7 +173,7 @@ function Campus() {
             });
             
             showToast('Erfolgreich eingeschrieben! Sie finden den Kurs unter "Meine Kurse".', 'success');
-            loadStats(); // Aktualisiere Dashboard-Stats
+            loadStats(user?.id); // Aktualisiere Dashboard-Stats
             
             if (closeModal) {
                 // Warte kurz, damit User die Meldung sieht
