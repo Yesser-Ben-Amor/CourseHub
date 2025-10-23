@@ -75,6 +75,38 @@ public class CourseService {
         return learningPathRepository.save(learningPath);
     }
 
+    @Transactional
+    public LearningPathEntity updateLearningPath(Long courseId, Long pathId, String level, 
+                                                  Integer points, Integer durationWeeks, 
+                                                  String overview, String description) {
+        LearningPathEntity path = learningPathRepository.findById(pathId)
+                .orElseThrow(() -> new RuntimeException("Learning path not found"));
+        
+        if (!path.getCourse().getId().equals(courseId)) {
+            throw new RuntimeException("Learning path does not belong to this course");
+        }
+        
+        path.setLevel(level);
+        path.setPoints(points);
+        path.setDurationWeeks(durationWeeks);
+        path.setOverview(overview);
+        path.setDescription(description);
+        
+        return learningPathRepository.save(path);
+    }
+
+    @Transactional
+    public void deleteLearningPath(Long courseId, Long pathId) {
+        LearningPathEntity path = learningPathRepository.findById(pathId)
+                .orElseThrow(() -> new RuntimeException("Learning path not found"));
+        
+        if (!path.getCourse().getId().equals(courseId)) {
+            throw new RuntimeException("Learning path does not belong to this course");
+        }
+        
+        learningPathRepository.delete(path);
+    }
+
     public long getEnrollmentCount(Long courseId) {
         if (enrollmentRepository != null) {
             return enrollmentRepository.countByCourseId(courseId);

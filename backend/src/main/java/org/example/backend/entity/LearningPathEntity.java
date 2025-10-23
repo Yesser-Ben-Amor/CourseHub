@@ -27,6 +27,9 @@ public class LearningPathEntity {
     @Column(length = 1000)
     private String overview;
 
+    @Column(length = 2000)
+    private String description;
+
     @Column(name = "created_at")
     private Instant createdAt;
 
@@ -53,6 +56,9 @@ public class LearningPathEntity {
 
     public String getOverview() { return overview; }
     public void setOverview(String overview) { this.overview = overview; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
