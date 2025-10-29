@@ -1,0 +1,830 @@
+/* LiveSeminar.css - Minimale Version */
+
+/* Basis-Layout */
+.live-seminar {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: #0d1117;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    position: relative;
+}
+
+/* Zentrales Display */
+.screen-share-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.screen-share-placeholder {
+    width: 400px;
+    height: 400px;
+    background-color: #161b22;
+    border: 2px solid #30363d;
+    border-radius: 4px;
+}
+
+/* Remote Video Styles */
+.remote-video-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.remote-video {
+    width: 100%;
+    height: 100%;
+    min-height: 240px;
+    background-color: #111;
+    object-fit: contain;
+}
+
+.remote-video.screen-share {
+    object-fit: contain;
+}
+
+.video-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+}
+
+/* Lade- und Fehlerzustände */
+.live-seminar-loading,
+.live-seminar-error,
+.live-seminar-not-found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+    padding: 2rem;
+}
+
+/* Modernes Menü */
+.side-menu {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    z-index: 2000;
+    background-color: rgba(25, 25, 25, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 12px 20px;
+    border-radius: 50px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.side-menu-button {
+    background-color: transparent;
+    color: #ffffff;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 20px;
+    position: relative;
+}
+
+.side-menu-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.side-menu-button::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: #ffffff;
+    transform: translateX(-50%);
+    transition: width 0.2s ease;
+}
+
+.side-menu-button:hover::after {
+    width: 70%;
+}
+
+.side-menu-button.active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.side-menu-button.active::after {
+    width: 70%;
+}
+
+.side-menu-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.side-menu-button:disabled:hover {
+    background-color: transparent;
+}
+
+.side-menu-button:disabled::after {
+    width: 0;
+}
+
+/* Spezieller Stil für den Bildschirm teilen Button */
+.screen-share-btn {
+    background-color: rgba(66, 133, 244, 0.15); /* Leichtes Blau */
+    position: relative;
+}
+
+.screen-share-btn:hover {
+    background-color: rgba(66, 133, 244, 0.3); /* Stärkeres Blau beim Hover */
+}
+
+.screen-share-btn::after {
+    background-color: rgb(66, 133, 244); /* Blaue Unterstreichung */
+}
+
+/* Whiteboard Styles */
+.whiteboard {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    background-color: #000;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Canvas Container */
+.canvas-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding: 20px;
+}
+
+.whiteboard-canvas {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    width: 80%;
+    height: 80%;
+    max-width: 1200px;
+    max-height: 800px;
+}
+
+/* Toolbar */
+.whiteboard-toolbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 15px;
+    background-color: rgba(25, 25, 25, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 50px;
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.tool-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tool-group label {
+    color: #fff;
+    font-size: 0.9rem;
+    margin-right: 5px;
+}
+
+/* Tool Buttons */
+.tool-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tool-btn.active {
+    background-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 0 2px #fff;
+}
+
+/* Color Palette */
+.color-palette {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.color-btn {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.color-btn.active {
+    border-color: #fff;
+    transform: scale(1.2);
+}
+
+.color-picker {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+/* Size Slider */
+.size-slider {
+    width: 100px;
+    cursor: pointer;
+}
+
+/* Clear Button */
+.clear-btn {
+    background-color: rgba(255, 59, 48, 0.2);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clear-btn:hover {
+    background-color: rgba(255, 59, 48, 0.4);
+}
+
+/* Readonly Overlay */
+.readonly-overlay {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+/* Files Container */
+.files-container {
+    width: 100%;
+    height: 100vh;
+    padding: 30px;
+    overflow-y: auto;
+    background-color: #000;
+    color: #fff;
+}
+
+/* Files Header */
+.files-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #30363d;
+}
+
+.files-container h2 {
+    font-size: 1.8rem;
+    font-weight: 300;
+    margin: 0;
+    color: #f0f6fc;
+}
+
+/* Clear Files Button */
+.clear-files-btn {
+    background-color: #da3633;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clear-files-btn:hover {
+    background-color: #f85149;
+}
+
+.clear-files-btn:active {
+    transform: translateY(1px);
+    background-color: #b62324;
+}
+
+.no-files {
+    text-align: center;
+    color: #8b949e;
+    font-size: 1.1rem;
+    margin-top: 50px;
+}
+
+.files-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 15px;
+    transition: all 0.2s ease;
+    gap: 15px;
+}
+
+.file-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-color: #58a6ff;
+}
+
+.file-content {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0; /* Wichtig für Text-Overflow */
+}
+
+.file-icon {
+    font-size: 2rem;
+    margin-right: 15px;
+    color: #58a6ff;
+    flex-shrink: 0;
+}
+
+.file-details {
+    flex: 1;
+    min-width: 0; /* Wichtig für Text-Overflow */
+}
+
+.file-actions {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.file-name {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #f0f6fc;
+    margin-bottom: 5px;
+}
+
+.file-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: #8b949e;
+    margin-bottom: 5px;
+}
+
+.file-description {
+    font-size: 0.9rem;
+    color: #c9d1d9;
+    margin-top: 5px;
+}
+
+/* File Actions Container */
+.file-actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+/* File Buttons Container */
+.file-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Download Button */
+.file-download {
+background-color: #238636;
+color: #fff;
+border: none;
+border-radius: 4px;
+padding: 4px 8px;
+font-size: 0.8rem;
+font-weight: 500;
+text-decoration: none;
+transition: all 0.2s ease;
+cursor: pointer;
+display: inline-block;
+text-align: center;
+white-space: nowrap;
+}
+
+.file-download:hover {
+background-color: #2ea043;
+text-decoration: none;
+}
+
+.file-download:active {
+    transform: translateY(1px);
+    background-color: #1f7a31;
+}
+
+/* Delete Button */
+.file-delete {
+    background-color: #da3633;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.file-delete:hover {
+    background-color: #f85149;
+    text-decoration: none;
+}
+
+.file-delete:active {
+    transform: translateY(1px);
+    background-color: #b62324;
+}
+
+/* Erweitertes Datei-Info-Panel */
+.file-info-panel {
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.file-details-expanded {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.file-details-expanded p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #c9d1d9;
+}
+
+.file-details-expanded p strong {
+    color: #f0f6fc;
+    margin-right: 5px;
+}
+
+.file-note {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #30363d;
+}
+
+.file-note p {
+    margin: 0 0 5px 0;
+    font-size: 0.85rem;
+    color: #8b949e;
+}
+
+.file-note p:last-child {
+    margin-bottom: 0;
+}
+
+/* Bestätigungsdialog */
+.confirm-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3100;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.confirm-dialog {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.confirm-dialog-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    text-align: center;
+}
+
+.confirm-dialog-icon {
+    font-size: 2.5rem;
+    color: #f0883e;
+}
+
+.confirm-dialog-message {
+    font-size: 1.1rem;
+    color: #f0f6fc;
+    line-height: 1.5;
+}
+
+.confirm-dialog-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.confirm-dialog-cancel,
+.confirm-dialog-confirm {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.confirm-dialog-cancel {
+    background-color: #21262d;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+}
+
+.confirm-dialog-confirm {
+    background-color: #da3633;
+    color: #fff;
+}
+
+.confirm-dialog-cancel:hover {
+    background-color: #30363d;
+}
+
+.confirm-dialog-confirm:hover {
+    background-color: #f85149;
+}
+
+/* Benachrichtigungen */
+.notification {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 3000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s ease-out, fadeOut 0.3s ease-out 2.7s;
+    max-width: 90%;
+    width: auto;
+}
+
+.notification.success {
+    background-color: rgba(35, 134, 54, 0.9);
+    border-left: 4px solid #2ea043;
+}
+
+.notification.error {
+    background-color: rgba(218, 54, 51, 0.9);
+    border-left: 4px solid #f85149;
+}
+
+.notification.info {
+    background-color: rgba(88, 166, 255, 0.9);
+    border-left: 4px solid #58a6ff;
+}
+
+.notification-icon {
+    font-size: 1.2rem;
+}
+
+.notification-message {
+    font-size: 0.95rem;
+    color: #fff;
+    font-weight: 500;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translate(-50%, 20px);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* Upload Dialog */
+.upload-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.upload-dialog {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 25px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    color: #fff;
+}
+
+.upload-dialog h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: #f0f6fc;
+    text-align: center;
+}
+
+.upload-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.upload-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.upload-form-group label {
+    font-size: 0.9rem;
+    color: #c9d1d9;
+}
+
+.upload-form-group input[type="file"] {
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 10px;
+    color: #c9d1d9;
+    cursor: pointer;
+}
+
+.upload-form-group textarea {
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 10px;
+    color: #c9d1d9;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.upload-form-group textarea:focus,
+.upload-form-group input:focus {
+    outline: none;
+    border-color: #58a6ff;
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+}
+
+.selected-file {
+    background-color: rgba(88, 166, 255, 0.1);
+    border: 1px solid rgba(88, 166, 255, 0.2);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 5px;
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.file-size {
+    color: #8b949e;
+}
+
+.upload-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.upload-cancel,
+.upload-submit {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.upload-cancel {
+    background-color: transparent;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+}
+
+.upload-submit {
+    background-color: #238636;
+    color: #fff;
+}
+
+.upload-cancel:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.upload-submit:hover {
+    background-color: #2ea043;
+}
+
+.upload-cancel:disabled,
+.upload-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

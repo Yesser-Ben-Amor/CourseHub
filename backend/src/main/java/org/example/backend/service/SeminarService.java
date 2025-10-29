@@ -16,6 +16,43 @@ public class SeminarService {
 
     public SeminarService(SeminarRepository seminarRepository) {
         this.seminarRepository = seminarRepository;
+        // Erstelle Demo-Seminar beim Start
+        createDemoSeminarIfNotExists();
+    }
+    
+    private void createDemoSeminarIfNotExists() {
+        try {
+            // Update existierendes Seminar falls Instructor Name falsch ist
+            List<SeminarEntity> existingSeminars = seminarRepository.findAll();
+            for (SeminarEntity seminar : existingSeminars) {
+                if ("Demo Dozent".equals(seminar.getInstructorName())) {
+                    seminar.setInstructorName("dozent");
+                    seminarRepository.save(seminar);
+                    System.out.println("Updated seminar instructor name to 'dozent' for seminar ID: " + seminar.getId());
+                }
+            }
+            
+            // Prüfe ob bereits Seminare existieren
+            if (seminarRepository.count() == 0) {
+                SeminarEntity demoSeminar = new SeminarEntity();
+                demoSeminar.setTitle("Demo Live-Seminar");
+                demoSeminar.setDescription("Ein Demo-Seminar für Testzwecke");
+                demoSeminar.setInstructorName("dozent");
+                demoSeminar.setStartTime(LocalDateTime.now());
+                demoSeminar.setEndTime(LocalDateTime.now().plusHours(2));
+                demoSeminar.setMaxParticipants(50);
+                demoSeminar.setCurrentParticipants(0);
+                demoSeminar.setMeetingUrl("https://demo.zoom.us/meeting");
+                demoSeminar.setMeetingId("123-456-789");
+                demoSeminar.setMeetingPassword("demo123");
+                demoSeminar.setStatus(SeminarEntity.SeminarStatus.LIVE);
+                
+                seminarRepository.save(demoSeminar);
+                System.out.println("Demo-Seminar erstellt mit ID: " + demoSeminar.getId());
+            }
+        } catch (Exception e) {
+            System.err.println("Fehler beim Erstellen des Demo-Seminars: " + e.getMessage());
+        }
     }
 
     // Alle Seminare abrufen

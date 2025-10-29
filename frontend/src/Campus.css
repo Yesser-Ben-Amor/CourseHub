@@ -254,14 +254,14 @@
 }
 
 .course-enroll {
-    width: 100%;
-    padding: 0.4rem 1rem;
+    flex: 1;
+    padding: 0.75rem 1rem;
     font-size: 0.875rem;
     font-weight: 500;
     color: #ffffff;
     background: #238636;
     border: 1px solid rgba(240, 246, 252, 0.1);
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.15s;
 }
@@ -675,6 +675,41 @@
 .detail-button-primary:hover {
     background: #2ea043;
     transform: scale(1.02);
+}
+
+/* Live Seminar Buttons */
+.course-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.join-live-btn {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 80px;
+}
+
+.join-live-btn:hover {
+    background: linear-gradient(135deg, #c0392b, #a93226);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+}
+
+.join-live-btn:active {
+    transform: translateY(0);
 }
 
 /* Responsive */

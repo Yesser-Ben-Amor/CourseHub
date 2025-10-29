@@ -92,6 +92,26 @@ function Campus() {
 
         try {
             const userData = JSON.parse(userStr);
+            
+            // Role-Erkennung basierend auf Email
+            if (!userData.role) {
+                const isInstructor = userData.email && (
+                    userData.email.toLowerCase() === 'teacher@coursehub.de' ||
+                    userData.email.toLowerCase().endsWith('@coursehub.de') ||
+                    userData.email.toLowerCase().includes('teacher') ||
+                    userData.email.toLowerCase().includes('dozent')
+                );
+                userData.role = isInstructor ? 'INSTRUCTOR' : 'STUDENT';
+            }
+            
+            // Debug: Zeige User-Daten in Console
+            console.log('User Data:', {
+                username: userData.username,
+                email: userData.email,
+                role: userData.role,
+                isInstructor: userData.role === 'INSTRUCTOR'
+            });
+            
             setUser(userData);
             
             // Lade Kurse vom Backend
@@ -248,7 +268,19 @@ function Campus() {
                     <h1 className="campus-logo">CourseHub</h1>
                     <nav className="campus-nav">
                         <a href="#" className="nav-link active">Campus</a>
-                        <a href="#" className="nav-link">Live Seminar</a>
+                        {/* Live Seminar - nur für Dozenten */}
+                        {user.role === 'INSTRUCTOR' && (
+                            <button 
+                                onClick={() => {
+                                    // Verwende ersten verfügbaren Kurs oder erstelle Demo-Seminar
+                                    const firstCourse = courses.length > 0 ? courses[0].id : 1;
+                                    navigate(`/live-seminar/${firstCourse}`);
+                                }} 
+                                className="nav-link nav-button"
+                            >
+                                🎓 Live Seminar
+                            </button>
+                        )}
                         <a href="#" className="nav-link">Bibliothek</a>
                         <a href="#" className="nav-link">Meine Kurse</a>
                         <a href="#" className="nav-link">Kalender</a>
@@ -337,7 +369,20 @@ function Campus() {
                                         <div className="course-meta">
                                             <span className="course-duration">{course.learningPaths?.length || 0} Lernpfade</span>
                                         </div>
-                                        <button className="course-enroll" onClick={() => handleEnroll(course)}>Einschreiben</button>
+                                        <div className="course-actions">
+                                            <button className="course-enroll" onClick={() => handleEnroll(course)}>Einschreiben</button>
+                                            
+                                            {/* Live beitreten - nur für Studenten */}
+                                            {user.role === 'STUDENT' && (
+                                                <button 
+                                                    onClick={() => navigate(`/live-seminar/${course.id}`)}
+                                                    className="join-live-btn"
+                                                    title="Live-Seminar beitreten (falls aktiv)"
+                                                >
+                                                    🔴 Live
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))
@@ -510,13 +555,24 @@ function Campus() {
 
                         <div className="detail-footer">
                             <button className="detail-button-secondary" onClick={handleCloseDetailView}>Zurück</button>
-                            <button 
-                                className="detail-button-primary"
-                                onClick={() => enrollInCourse(1, true)}
-                                disabled={enrolling}
-                            >
-                                {enrolling ? 'Wird eingeschrieben...' : 'Jetzt einschreiben'}
-                            </button>
+                            <div className="course-actions">
+                                <button 
+                                    onClick={() => enrollInCourse(1, true)}
+                                    disabled={enrolling}
+                                    className="enroll-btn"
+                                >
+                                    {enrolling ? 'Wird eingeschrieben...' : 'Einschreiben'}
+                                </button>
+                                {user.role === 'STUDENT' && (
+                                    <button 
+                                        onClick={() => navigate(`/live-seminar/${course.id}`)}
+                                        className="join-live-btn"
+                                        title="Live-Seminar beitreten (falls aktiv)"
+                                    >
+                                        🔴 Live beitreten
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -6,16 +6,16 @@ import App from './App.tsx'
 import Campus from './Campus.tsx'
 import AdminLogin from './AdminLogin.tsx'
 import AdminDashboard from './AdminDashboard.tsx'
+import LiveSeminar from './components/LiveSeminar/LiveSeminar.tsx'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/campus" element={<Campus />} />
-        <Route path="/admin" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      </Routes>
-    </BrowserRouter>
-  </StrictMode>,
+  <BrowserRouter>
+    <Routes>
+      <Route path="/" element={<App />} />
+      <Route path="/campus" element={<Campus />} />
+      <Route path="/live-seminar/:seminarId" element={<LiveSeminar />} />
+      <Route path="/admin" element={<AdminLogin />} />
+      <Route path="/admin/dashboard" element={<AdminDashboard />} />
+    </Routes>
+  </BrowserRouter>,
 )

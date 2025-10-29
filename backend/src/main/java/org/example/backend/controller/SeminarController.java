@@ -156,6 +156,41 @@ public class SeminarController {
         }
     }
 
+    // Submissions Endpoints
+    @GetMapping("/{seminarId}/submissions")
+    public ResponseEntity<List<Map<String, Object>>> getSubmissions(@PathVariable Long seminarId) {
+        // Temporär: Leere Liste zurückgeben
+        return ResponseEntity.ok(List.of());
+    }
+    
+    @PostMapping("/{seminarId}/submissions/link")
+    public ResponseEntity<Map<String, Object>> submitLink(@PathVariable Long seminarId, @RequestBody Map<String, Object> request) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Link-Submission erfolgreich");
+        return ResponseEntity.ok(response);
+    }
+    
+    // Whiteboard Endpoints
+    @GetMapping("/{seminarId}/whiteboard")
+    public ResponseEntity<List<Map<String, Object>>> getWhiteboardDrawings(@PathVariable Long seminarId) {
+        // Temporär: Leere Liste zurückgeben
+        return ResponseEntity.ok(List.of());
+    }
+    
+    @PostMapping("/{seminarId}/whiteboard")
+    public ResponseEntity<Map<String, Object>> saveDrawing(@PathVariable Long seminarId, @RequestBody Map<String, Object> request) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Zeichnung gespeichert");
+        return ResponseEntity.ok(response);
+    }
+    
+    @DeleteMapping("/{seminarId}/whiteboard")
+    public ResponseEntity<Map<String, Object>> clearWhiteboard(@PathVariable Long seminarId) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Whiteboard gelöscht");
+        return ResponseEntity.ok(response);
+    }
+
     // Helper Methode für Response Mapping
     private Map<String, Object> mapSeminarToResponse(SeminarEntity seminar) {
         Map<String, Object> response = new HashMap<>();
