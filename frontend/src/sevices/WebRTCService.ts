@@ -244,10 +244,14 @@ export class WebRTCService {
         }
     }
 
-    // Bildschirmteilen starten
-    async startScreenSharing(): Promise<MediaStream | null> {
+    /**
+     * Bildschirmteilen starten mit verschiedenen Optionen
+     * @param displayType Art der Bildschirmfreigabe: 'monitor' (gesamter Bildschirm), 'window' (Fenster) oder 'browser' (Tab)
+     * @returns MediaStream oder null bei Fehler
+     */
+    async startScreenSharing(displayType: 'monitor' | 'window' | 'browser' = 'monitor'): Promise<MediaStream | null> {
         try {
-            console.log('💻 Starting screen sharing...');
+            console.log(`💻 Starting screen sharing (${displayType})...`);
             
             // Bestehenden Screen-Stream stoppen falls vorhanden
             if (this.screenStream) {
@@ -255,17 +259,44 @@ export class WebRTCService {
                 this.screenStream = null;
             }
             
-            // Bildschirm anfordern mit optimierten Einstellungen
-            const displayStream = await navigator.mediaDevices.getDisplayMedia({
+            // Bildschirm anfordern mit optimierten Einstellungen je nach Typ
+            // Chrome hat Probleme mit zu spezifischen Constraints, daher vereinfachen wir sie
+            const isChrome = navigator.userAgent.indexOf('Chrome') > -1;
+            
+            // Basis-Optionen
+            const displayMediaOptions: DisplayMediaStreamOptions = {
                 video: {
-                    cursor: 'always',
-                    displaySurface: 'monitor',
-                    width: { ideal: 1280 },  // Reduzierte Auflösung für bessere Kompatibilität
-                    height: { ideal: 720 },
-                    frameRate: { max: 30 }
+                    cursor: 'always'
                 },
                 audio: true  // Audio vom Bildschirm erlauben (falls verfügbar)
-            });
+            };
+            
+            // Nur in Firefox und anderen Browsern die erweiterten Optionen verwenden
+            // Chrome ignoriert displaySurface oft oder hat Probleme damit
+            if (!isChrome) {
+                console.log('💻 Using extended options for non-Chrome browser');
+                (displayMediaOptions.video as MediaTrackConstraints).displaySurface = displayType;
+                (displayMediaOptions.video as MediaTrackConstraints).width = { ideal: 1280 };
+                (displayMediaOptions.video as MediaTrackConstraints).height = { ideal: 720 };
+                (displayMediaOptions.video as MediaTrackConstraints).frameRate = { max: 30 };
+                
+                // Spezifische Anpassungen je nach Typ
+                if (displayType === 'browser') {
+                    // Für Browser-Tabs optimieren
+                    (displayMediaOptions.video as MediaTrackConstraints).frameRate = { ideal: 30, max: 60 };
+                    (displayMediaOptions.video as MediaTrackConstraints).width = { ideal: 1920, max: 3840 };
+                    (displayMediaOptions.video as MediaTrackConstraints).height = { ideal: 1080, max: 2160 };
+                } else if (displayType === 'window') {
+                    // Für Fenster optimieren
+                    (displayMediaOptions.video as MediaTrackConstraints).frameRate = { ideal: 30, max: 60 };
+                }
+            } else {
+                console.log('💻 Using simplified options for Chrome');
+                // Für Chrome nur minimale Optionen verwenden
+                // Chrome zeigt seinen eigenen Auswahldialog an, der die Auswahl von Monitor/Fenster/Tab ermöglicht
+            }
+            
+            const displayStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
             
             console.log('💻 Display stream obtained:', {
                 tracks: displayStream.getTracks().length,

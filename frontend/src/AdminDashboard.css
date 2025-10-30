@@ -580,6 +580,215 @@
     flex: 1;
 }
 
+/* Books and Scripts Section */
+.admin-books-section {
+    width: 100%;
+}
+
+.admin-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.admin-section-header h3 {
+    font-size: 1.2rem;
+    color: #c9d1d9;
+    margin: 0;
+}
+
+.admin-add-button {
+    background: #238636;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.admin-add-button:hover {
+    background: #2ea043;
+}
+
+.admin-add-icon {
+    font-size: 1.2rem;
+    margin-right: 8px;
+}
+
+.admin-book-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    background: #0d1117;
+    transition: background-color 0.2s;
+}
+
+.admin-book-item:hover {
+    background: #161b22;
+}
+
+.admin-book-info {
+    display: flex;
+    align-items: center;
+}
+
+.admin-book-icon {
+    font-size: 24px;
+    margin-right: 15px;
+    color: #58a6ff;
+}
+
+.admin-book-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-book-title {
+    font-weight: 600;
+    color: #c9d1d9;
+    margin-bottom: 5px;
+}
+
+.admin-book-author {
+    font-size: 0.9rem;
+    color: #8b949e;
+}
+
+.admin-book-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.admin-book-edit-btn {
+    background: #0d1117;
+    color: #58a6ff;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.admin-book-edit-btn:hover {
+    background: #161b22;
+    border-color: #58a6ff;
+}
+
+.admin-book-delete-btn {
+    background: #0d1117;
+    color: #f85149;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.admin-book-delete-btn:hover {
+    background: #da3633;
+    color: #ffffff;
+    border-color: #da3633;
+}
+
+.admin-book-download-btn {
+    background: #0d1117;
+    color: #238636;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: 5px;
+}
+
+.admin-book-download-btn:hover {
+    background: #238636;
+    color: #ffffff;
+    border-color: #238636;
+}
+
+/* File Upload Styles */
+.admin-file-input {
+    border: 1px dashed #30363d;
+    padding: 10px;
+    border-radius: 6px;
+    background-color: #0d1117;
+    width: 100%;
+    color: #c9d1d9;
+    cursor: pointer;
+}
+
+.admin-file-input:hover {
+    border-color: #58a6ff;
+    background-color: rgba(56, 139, 253, 0.1);
+}
+
+.admin-form-help {
+    font-size: 0.8rem;
+    color: #8b949e;
+    margin-top: 5px;
+}
+
+.admin-file-info {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+}
+
+.admin-file-info p {
+    margin: 5px 0;
+    font-size: 0.9rem;
+    color: #c9d1d9;
+}
+
+.admin-file-warning {
+    color: #f85149 !important;
+    font-weight: 500;
+}
+
+.admin-books-list {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 20px;
+    min-height: 300px;
+}
+
+.admin-info-message {
+    display: flex;
+    align-items: center;
+    background: rgba(56, 139, 253, 0.1);
+    border: 1px solid rgba(56, 139, 253, 0.4);
+    border-radius: 6px;
+    padding: 15px;
+    margin: 20px 0;
+}
+
+.admin-info-icon {
+    font-size: 24px;
+    margin-right: 15px;
+}
+
+.admin-info-message p {
+    color: #c9d1d9;
+    margin: 0;
+}
+
 /* Confirm Dialog */
 .admin-confirm-overlay {
     position: fixed;

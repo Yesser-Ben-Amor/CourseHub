@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { WebRTCService } from '../../sevices/WebRTCService';
 import type { User } from '../../types/seminar.types';
 
@@ -177,12 +177,14 @@ const VideoSection: React.FC<VideoSectionProps> = ({
     });
     
     const localVideoRef = useRef<HTMLVideoElement>(null);
+    const screenVideoRef = useRef<HTMLVideoElement>(null);
     const [webRTCService, setWebRTCService] = useState<WebRTCService | null>(null);
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
     const [remoteStreams, setRemoteStreams] = useState<RemoteStream[]>([]);
     const [isConnected, setIsConnected] = useState(false);
     const [isStreaming, setIsStreaming] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'info' | null}>({message: '', type: null});
     const [participants, setParticipants] = useState<Array<{username: string, role: string}>>([]);
     
     // State für Bildschirmteilen
@@ -282,7 +284,7 @@ const VideoSection: React.FC<VideoSectionProps> = ({
     // Video-Element mit Stream verbinden sobald verfügbar
     useEffect(() => {
         if (localVideoRef.current && localStream) {
-            console.log('🔗 Connecting stream to video element');
+            console.log('🔗 Connecting local stream to video element');
             localVideoRef.current.srcObject = localStream;
             
             // Force play
@@ -291,6 +293,19 @@ const VideoSection: React.FC<VideoSectionProps> = ({
             });
         }
     }, [localStream]);
+    
+    // Screen-Video-Element mit Screen-Stream verbinden sobald verfügbar
+    useEffect(() => {
+        if (screenVideoRef.current && screenStream) {
+            console.log('🔗 Connecting screen stream to video element');
+            screenVideoRef.current.srcObject = screenStream;
+            
+            // Force play
+            screenVideoRef.current.play().catch(error => {
+                console.warn('⚠️ Screen video autoplay failed:', error);
+            });
+        }
+    }, [screenStream]);
 
     // startLocalStream Funktion wurde entfernt
 
@@ -312,36 +327,173 @@ const VideoSection: React.FC<VideoSectionProps> = ({
         }
     };
     
-    // Bildschirmteilen starten/stoppen
-    const toggleScreenSharing = async (): Promise<void> => {
+    // State für Bildschirmfreigabe-Optionen
+    const [showScreenShareOptions, setShowScreenShareOptions] = useState<boolean>(false);
+    const [screenShareType, setScreenShareType] = useState<'monitor' | 'window' | 'browser'>('monitor');
+    
+    // Browser-Erkennung
+    const isChrome = navigator.userAgent.indexOf('Chrome') > -1 && navigator.userAgent.indexOf('Firefox') === -1;
+    const isFirefox = navigator.userAgent.indexOf('Firefox') > -1;
+
+    // Bildschirmteilen-Menü anzeigen/ausblenden
+    const toggleScreenShareMenu = (): void => {
+        if (isScreenSharing) {
+            // Wenn bereits geteilt wird, direkt stoppen
+            stopScreenSharing();
+        } else {
+            // Sonst Menü anzeigen/ausblenden
+            setShowScreenShareOptions(!showScreenShareOptions);
+        }
+    };
+
+    // Bildschirmteilen starten mit ausgewähltem Typ
+    const startScreenSharing = async (type: 'monitor' | 'window' | 'browser'): Promise<void> => {
         if (!webRTCService || !isConnected) {
-            setError('Verbindung nicht hergestellt');
+            const errorMsg = 'Verbindung nicht hergestellt';
+            console.error('❌ ' + errorMsg);
+            setError(errorMsg);
             return;
         }
         
         try {
-            if (isScreenSharing) {
-                // Bildschirmteilen beenden
-                webRTCService.stopScreenSharing();
-                setScreenStream(null);
-                setIsScreenSharing(false);
-                console.log('💻 Screen sharing stopped');
-            } else {
-                // Bildschirmteilen starten
-                console.log('💻 Starting screen sharing...');
-                const stream = await webRTCService.startScreenSharing();
+            // Menü ausblenden und Benachrichtigung anzeigen
+            setShowScreenShareOptions(false);
+            setScreenShareType(type);
+            
+            // Benachrichtigung anzeigen
+            setNotification({
+                message: `Starte Bildschirmfreigabe (${type === 'monitor' ? 'Bildschirm' : type === 'window' ? 'Fenster' : 'Tab'})...`,
+                type: 'info'
+            });
+            
+            // Bildschirmteilen starten
+            console.log(`💻 Starting screen sharing (${type})...`);
+            console.log('💻 WebRTCService instance:', !!webRTCService);
+            
+            // Direkter Aufruf der Browser-API als Fallback
+            let stream;
+            try {
+                stream = await webRTCService.startScreenSharing(type);
+                console.log('💻 Stream from WebRTCService:', !!stream);
+            } catch (innerError) {
+                console.error('❌ Error from WebRTCService:', innerError);
                 
-                if (stream) {
-                    setScreenStream(stream);
-                    setIsScreenSharing(true);
-                    console.log('✅ Screen sharing started successfully');
+                // Fallback: Direkt die Browser-API verwenden mit minimalen Optionen
+                console.log('💻 Trying direct browser API as fallback...');
+                
+                // Prüfen, ob Chrome verwendet wird
+                const isChrome = navigator.userAgent.indexOf('Chrome') > -1;
+                
+                // Für Chrome vereinfachte Optionen verwenden
+                const displayMediaOptions: DisplayMediaStreamOptions = {
+                    video: {
+                        cursor: 'always'
+                    },
+                    audio: true
+                };
+                
+                // Nur für Firefox und andere Browser displaySurface hinzufügen
+                if (!isChrome) {
+                    (displayMediaOptions.video as MediaTrackConstraints).displaySurface = type;
                 }
+                
+                try {
+                    stream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+                } catch (chromeError) {
+                    console.error('❌ Chrome specific error:', chromeError);
+                    
+                    // Letzte Chance: Absolut minimale Optionen
+                    console.log('💻 Last resort: Using minimal options');
+                    stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                }
+                console.log('💻 Stream from direct API:', !!stream);
+            }
+            
+            if (stream) {
+                // Stream-State aktualisieren - useEffect wird sich um das Video-Element kümmern
+                setScreenStream(stream);
+                setIsScreenSharing(true);
+                console.log('✅ Screen sharing started successfully');
+                
+                // Erfolgsmeldung
+                setNotification({
+                    message: 'Bildschirmfreigabe erfolgreich gestartet',
+                    type: 'success'
+                });
+                setTimeout(() => setNotification({message: '', type: null}), 3000);
+            } else {
+                throw new Error('Kein Stream erhalten');
             }
         } catch (error) {
-            console.error('❌ Error toggling screen sharing:', error);
-            setError('Fehler beim Bildschirmteilen');
+            console.error('❌ Error starting screen sharing:', error);
+            setError(`Fehler beim Bildschirmteilen: ${error instanceof Error ? error.message : String(error)}`);
+            
+            // Fehlermeldung
+            setNotification({
+                message: `Fehler bei der Bildschirmfreigabe: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+                type: 'error'
+            });
+            setTimeout(() => setNotification({message: '', type: null}), 5000);
         }
     };
+    
+    // Bildschirmteilen stoppen
+    const stopScreenSharing = async (): Promise<void> => {
+        if (!webRTCService) return;
+        
+        try {
+            webRTCService.stopScreenSharing();
+            setScreenStream(null);
+            setIsScreenSharing(false);
+            console.log('💻 Screen sharing stopped');
+        } catch (error) {
+            console.error('❌ Error stopping screen sharing:', error);
+            setError('Fehler beim Beenden des Bildschirmteilens');
+        }
+    };
+    
+    // Alte toggleScreenSharing-Methode für Kompatibilität
+    const toggleScreenSharing = async (): Promise<void> => {
+        if (isScreenSharing) {
+            await stopScreenSharing();
+        } else {
+            setShowScreenShareOptions(true);
+        }
+    };
+    
+    // Funktion zum direkten Starten der Bildschirmfreigabe ohne Menü
+    const handleDirectScreenSharing = useCallback(async () => {
+        console.log('📡 Handling direct screen sharing');
+        try {
+            if (isScreenSharing) {
+                console.log('💻 Stopping screen sharing directly');
+                await stopScreenSharing();
+            } else {
+                console.log('💻 Starting screen sharing directly');
+                // Direkt den gesamten Bildschirm teilen ohne Menü
+                await startScreenSharing('monitor');
+            }
+        } catch (error) {
+            console.error('❌ Error in handleDirectScreenSharing:', error);
+            setError('Fehler bei der Bildschirmfreigabe: ' + (error instanceof Error ? error.message : String(error)));
+        }
+    }, [isScreenSharing, stopScreenSharing, startScreenSharing]);
+    
+    // Event-Listener für globales Event
+    useEffect(() => {
+        const handleToggleScreenSharing = () => {
+            console.log('📡 Received toggle-screen-sharing event');
+            handleDirectScreenSharing();
+        };
+        
+        console.log('📝 Adding event listener for toggle-screen-sharing');
+        document.addEventListener('toggle-screen-sharing', handleToggleScreenSharing);
+        
+        return () => {
+            console.log('📝 Removing event listener for toggle-screen-sharing');
+            document.removeEventListener('toggle-screen-sharing', handleToggleScreenSharing);
+        };
+    }, [handleDirectScreenSharing]); // Abhängigkeit vom Callback
 
     const stopStream = (): void => {
         if (localStream) {
@@ -363,11 +515,48 @@ const VideoSection: React.FC<VideoSectionProps> = ({
                 </div>
             )}
             
+            {/* Benachrichtigungen */}
+            {notification.type && (
+                <div className={`notification ${notification.type}`}>
+                    {notification.type === 'success' && <span className="notification-icon">✅</span>}
+                    {notification.type === 'error' && <span className="notification-icon">❌</span>}
+                    {notification.type === 'info' && <span className="notification-icon">ℹ️</span>}
+                    <span className="notification-message">{notification.message}</span>
+                </div>
+            )}
+            
             {/* Zentriertes dunkles Div für Bildschirmteilen */}
             <div className="screen-share-container">
-                <div className="screen-share-placeholder">
-                    {/* Hier kann später der Bildschirminhalt angezeigt werden */}
-                </div>
+                {isScreenSharing && screenStream ? (
+                    <div className="active-screen-share">
+                        <div className="screen-share-header">
+                            <span className="screen-share-status">Bildschirmfreigabe aktiv</span>
+                            {isInstructor && (
+                                <button 
+                                    className="screen-share-stop-btn"
+                                    onClick={stopScreenSharing}
+                                >
+                                    Beenden
+                                </button>
+                            )}
+                        </div>
+                        <video 
+                            ref={screenVideoRef}
+                            className="screen-share-video"
+                            autoPlay
+                            playsInline
+                            muted={false}
+                            controls={false}
+                        />
+                    </div>
+                ) : (
+                    <div className="screen-share-placeholder">
+                        {/* Platzhalter wenn kein Bildschirm geteilt wird */}
+                        <div className="screen-share-placeholder-text">
+                            {isInstructor ? 'Klicken Sie auf "Bildschirm teilen", um Ihren Bildschirm zu teilen' : 'Warten auf Bildschirmfreigabe...'}
+                        </div>
+                    </div>
+                )}
             </div>
             
             {/* Controls Bar */}
@@ -383,13 +572,52 @@ const VideoSection: React.FC<VideoSectionProps> = ({
                         </button>
                         
                         {isInstructor && (
-                            <button
-                                onClick={toggleScreenSharing}
-                                className={`meet-control-button ${isScreenSharing ? 'active' : ''}`}
-                                aria-label={isScreenSharing ? 'Bildschirmteilen beenden' : 'Bildschirm teilen'}
-                            >
-                                💻 {isScreenSharing ? 'Bildschirm stoppen' : 'Bildschirm teilen'}
-                            </button>
+                            <div className="screen-share-dropdown">
+                                <button
+                                    onClick={toggleScreenShareMenu}
+                                    className={`meet-control-button ${isScreenSharing ? 'active' : ''}`}
+                                    aria-label={isScreenSharing ? 'Bildschirmteilen beenden' : 'Bildschirm teilen'}
+                                >
+                                    💻 {isScreenSharing ? 'Bildschirm stoppen' : 'Bildschirm teilen'}
+                                </button>
+                                
+                                {showScreenShareOptions && !isScreenSharing && (
+                                    <div className="screen-share-options">
+                                        <button 
+                                            className="screen-share-option"
+                                            onClick={() => startScreenSharing('monitor')}
+                                        >
+                                            💻 Gesamter Bildschirm
+                                        </button>
+                                        <button 
+                                            className="screen-share-option"
+                                            onClick={() => startScreenSharing('window')}
+                                        >
+                                            💻 Fenster
+                                        </button>
+                                        <button 
+                                            className={`screen-share-option ${isChrome ? 'chrome-warning' : ''}`}
+                                            onClick={() => startScreenSharing('browser')}
+                                            title={isChrome ? 'In Chrome können nur Tabs im gleichen Fenster geteilt werden' : ''}
+                                        >
+                                            💻 Browser-Tab
+                                            {isChrome && <span className="chrome-tab-note">*</span>}
+                                        </button>
+                                        
+                                        {navigator.userAgent.indexOf('Chrome') > -1 && (
+                                            <div className="chrome-hint">
+                                                <p>Hinweis für Chrome-Nutzer:</p>
+                                                <ul>
+                                                    <li>Chrome erlaubt nur das Teilen von Tabs, die sich im <strong>gleichen Fenster</strong> wie diese Anwendung befinden</li>
+                                                    <li>Öffnen Sie Webseiten, die Sie teilen möchten, im gleichen Chrome-Fenster</li>
+                                                    <li>Für das Teilen von Tabs aus anderen Fenstern verwenden Sie bitte Firefox</li>
+                                                    <li>Erteilen Sie alle notwendigen Berechtigungen im Chrome-Dialog</li>
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         )}
                         
                         <button

@@ -281,7 +281,12 @@ function Campus() {
                                 🎓 Live Seminar
                             </button>
                         )}
-                        <a href="#" className="nav-link">Bibliothek</a>
+                        <button 
+                            onClick={() => navigate('/library')} 
+                            className="nav-link nav-button"
+                        >
+                            📚 Bibliothek
+                        </button>
                         <a href="#" className="nav-link">Meine Kurse</a>
                         <a href="#" className="nav-link">Kalender</a>
                         <a href="#" className="nav-link">Nachrichten</a>

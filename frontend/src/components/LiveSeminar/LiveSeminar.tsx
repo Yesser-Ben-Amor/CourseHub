@@ -152,12 +152,15 @@ const LiveSeminar: React.FC = () => {
                                 className="clear-files-btn"
                                 onClick={() => {
                                     // Bestätigungsdialog anzeigen
-                                    if (window.confirm('Möchten Sie wirklich ALLE Dateien löschen?')) {
-                                        // Zeige Info-Benachrichtigung an
-                                        setNotification({
-                                            message: 'Lösche alle Dateien...',
-                                            type: 'info'
-                                        });
+                                    setConfirmDialog({
+                                        show: true,
+                                        message: 'Möchten Sie wirklich ALLE Dateien löschen?',
+                                        onConfirm: () => {
+                                            // Zeige Info-Benachrichtigung an
+                                            setNotification({
+                                                message: 'Lösche alle Dateien...',
+                                                type: 'info'
+                                            });
                                         
                                         // Lösche alle Dateien nacheinander
                                         Promise.all(files.map(file => deleteFile(file.id)))
@@ -185,7 +188,8 @@ const LiveSeminar: React.FC = () => {
                                                     setNotification({message: '', type: null});
                                                 }, 5000);
                                             });
-                                    }
+                                        }
+                                    });
                                 }}
                             >
                                 Alle Dateien löschen
@@ -335,18 +339,38 @@ const LiveSeminar: React.FC = () => {
                 <button 
                     className="side-menu-button screen-share-btn"
                     onClick={() => {
-                        // Rufe die VideoSection-Komponente auf, um die Bildschirmfreigabe zu starten
-                        const videoSection = document.querySelector('.video-section-container');
-                        if (videoSection) {
-                            // Suche nach dem Bildschirmteilen-Button in der VideoSection
-                            const screenShareButton = videoSection.querySelector('button[aria-label="Bildschirmteilen beenden"], button[aria-label="Bildschirm teilen"]');
-                            if (screenShareButton) {
-                                screenShareButton.click();
-                            } else {
-                                alert('Bildschirmfreigabe-Funktion nicht verfügbar');
-                            }
+                        console.log('💻 Bildschirm teilen Button geklickt');
+                        // Wenn wir nicht in der Video-Ansicht sind, wechseln wir zuerst dorthin
+                        if (activeView !== 'video') {
+                            console.log('💻 Wechsle zur Video-Ansicht');
+                            setActiveView('video');
+                            // Nach kurzer Verzögerung die Bildschirmfreigabe starten
+                            setTimeout(() => {
+                                console.log('💻 Löse Event aus (nach Verzögerung)');
+                                // Direkter Zugriff auf die VideoSection-Komponente über ein globales Event
+                                const event = new CustomEvent('toggle-screen-sharing');
+                                document.dispatchEvent(event);
+                                
+                                // Zeige eine Benachrichtigung, falls das Event nicht verarbeitet wird
+                                setTimeout(() => {
+                                    console.log('💻 Prüfe, ob Event verarbeitet wurde');
+                                }, 500);
+                            }, 300);
                         } else {
-                            alert('VideoSection nicht gefunden');
+                            console.log('💻 Bereits in Video-Ansicht, löse Event direkt aus');
+                            // Direkter Zugriff auf die VideoSection-Komponente über ein globales Event
+                            try {
+                                const event = new CustomEvent('toggle-screen-sharing');
+                                document.dispatchEvent(event);
+                                console.log('💻 Event ausgelöst');
+                            } catch (error) {
+                                console.error('❌ Fehler beim Auslösen des Events:', error);
+                                setNotification({
+                                    message: 'Fehler beim Starten der Bildschirmfreigabe',
+                                    type: 'error'
+                                });
+                                setTimeout(() => setNotification({message: '', type: null}), 3000);
+                            }
                         }
                     }}
                 >

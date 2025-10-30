@@ -146,6 +146,87 @@ function AdminDashboard() {
         learningPathId: 0,
         progress: 0
     });
+    
+    // States für Books and Scripts
+    const [showBookModal, setShowBookModal] = useState(false);
+    const [editingBook, setEditingBook] = useState<{id: number, title: string, author: string, description: string, courseId: number} | null>(null);
+    const [bookFormData, setBookFormData] = useState({
+        title: '',
+        author: '',
+        description: '',
+        courseId: 0,
+        fileUpload: null as File | null
+    });
+    
+    // State für die Bücherliste
+    const [books, setBooks] = useState<Array<{
+        id: number;
+        title: string;
+        author: string;
+        description: string;
+        courseId: number;
+        icon: string;
+    }>>([{
+        id: 1,
+        title: 'Grundlagen der Informatik',
+        author: 'Prof. Dr. Müller',
+        description: 'Einführung in die Grundlagen der Informatik',
+        courseId: 1,
+        icon: '📖'
+    }, {
+        id: 2,
+        title: 'Programmieren mit Java',
+        author: 'Dr. Schmidt',
+        description: 'Praktische Einführung in die Java-Programmierung',
+        courseId: 2,
+        icon: '📗'
+    }, {
+        id: 3,
+        title: 'Datenbanksysteme',
+        author: 'Prof. Dr. Weber',
+        description: 'Grundlagen und Konzepte moderner Datenbanksysteme',
+        courseId: 3,
+        icon: '📘'
+    }]);
+
+    // Funktion zum Laden der Bücher aus der Datenbank
+    const loadBooks = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get('http://localhost:8080/api/books');
+            setBooks(response.data);
+            console.log('Bücher geladen:', response.data);
+        } catch (error) {
+            console.error('Fehler beim Laden der Bücher:', error);
+            // Fallback zu Demo-Daten, wenn API noch nicht implementiert ist
+            if (!books.length) {
+                setBooks([{
+                    id: 1,
+                    title: 'Grundlagen der Informatik',
+                    author: 'Prof. Dr. Müller',
+                    description: 'Einführung in die Grundlagen der Informatik',
+                    courseId: 1,
+                    icon: '📖'
+                }, {
+                    id: 2,
+                    title: 'Programmieren mit Java',
+                    author: 'Dr. Schmidt',
+                    description: 'Praktische Einführung in die Java-Programmierung',
+                    courseId: 2,
+                    icon: '📗'
+                }, {
+                    id: 3,
+                    title: 'Datenbanksysteme',
+                    author: 'Prof. Dr. Weber',
+                    description: 'Grundlagen und Konzepte moderner Datenbanksysteme',
+                    courseId: 3,
+                    icon: '📘'
+                }]);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         // Prüfe ob Admin eingeloggt ist
@@ -182,6 +263,11 @@ function AdminDashboard() {
         // Lade Einschreibungen wenn View aktiv ist
         if (activeView === 'enrollments') {
             loadEnrollments();
+        }
+        
+        // Lade Bücher wenn View aktiv ist
+        if (activeView === 'books') {
+            loadBooks();
         }
     }, [navigate, activeView]);
 
@@ -681,6 +767,99 @@ function AdminDashboard() {
         });
         setShowEnrollmentModal(true);
     };
+    
+    // Funktionen für Books and Scripts
+    const handleCreateBook = () => {
+        setEditingBook(null);
+        setBookFormData({
+            title: '',
+            author: '',
+            description: '',
+            courseId: 0,
+            fileUpload: null
+        });
+        setShowBookModal(true);
+    };
+    
+    const handleEditBook = (book: {id: number, title: string, author: string, description: string, courseId: number}) => {
+        setEditingBook(book);
+        setBookFormData({
+            title: book.title,
+            author: book.author,
+            description: book.description,
+            courseId: book.courseId,
+            fileUpload: null
+        });
+        setShowBookModal(true);
+    };
+    
+    const handleSubmitBook = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        try {
+            // Prüfe die Dateigröße - max 10MB
+            const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in Bytes
+            
+            if (bookFormData.fileUpload && bookFormData.fileUpload.size > MAX_FILE_SIZE) {
+                showToast(`Die Datei ist zu groß. Maximale Dateigröße: 10MB`, 'error');
+                return;
+            }
+            
+            // Erstelle FormData für Datei-Upload
+            const formData = new FormData();
+            formData.append('title', bookFormData.title);
+            formData.append('author', bookFormData.author);
+            formData.append('description', bookFormData.description);
+            formData.append('courseId', bookFormData.courseId.toString());
+            
+            if (bookFormData.fileUpload) {
+                formData.append('file', bookFormData.fileUpload);
+            }
+            
+            if (editingBook) {
+                // Buch aktualisieren
+                await axios.put(`http://localhost:8080/api/books/${editingBook.id}`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                showToast(`Buch "${bookFormData.title}" erfolgreich aktualisiert!`, 'success');
+            } else {
+                // Neues Buch hinzufügen
+                await axios.post('http://localhost:8080/api/books', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                showToast(`Buch "${bookFormData.title}" erfolgreich hinzugefügt!`, 'success');
+            }
+            
+            setShowBookModal(false);
+            // Lade die Bücher neu, um die Änderungen zu sehen
+            loadBooks();
+        } catch (error: any) {
+            console.error('Fehler beim Speichern:', error);
+            const errorMsg = error.response?.data?.message || 'Fehler beim Speichern des Buches';
+            showToast(errorMsg, 'error');
+        }
+    };
+    
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const fileSizeInMB = file.size / (1024 * 1024);
+            
+            // Warnung bei großen Dateien
+            if (fileSizeInMB > 8) {
+                showToast(`Warnung: Die Datei ist ${fileSizeInMB.toFixed(2)}MB groß. Dateien über 10MB können nicht hochgeladen werden.`, 'info');
+            }
+            
+            setBookFormData({
+                ...bookFormData,
+                fileUpload: file
+            });
+        }
+    };
 
     const showToast = (message: string, type: 'success' | 'error') => {
         setToast({ message, type });
@@ -750,6 +929,14 @@ function AdminDashboard() {
                     </button>
 
                     <button
+                        className={`admin-nav-item ${activeView === 'books' ? 'active' : ''}`}
+                        onClick={() => setActiveView('books')}
+                    >
+                        <span className="admin-nav-icon">📚</span>
+                        Books and Scripts
+                    </button>
+
+                    <button
                         className={`admin-nav-item ${activeView === 'settings' ? 'active' : ''}`}
                         onClick={() => setActiveView('settings')}
                     >
@@ -765,6 +952,79 @@ function AdminDashboard() {
                 </div>
             </aside>
 
+            {/* Book Modal */}
+            {showBookModal && (
+                <div className="admin-modal-overlay" onClick={() => setShowBookModal(false)}>
+                    <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="admin-modal-header">
+                            <h3>{editingBook ? 'Buch bearbeiten' : 'Neues Buch hinzufügen'}</h3>
+                            <button className="admin-modal-close" onClick={() => setShowBookModal(false)}>&times;</button>
+                        </div>
+                        <form className="admin-form" onSubmit={handleSubmitBook}>
+                            <div className="admin-form-group">
+                                <label htmlFor="bookTitle">Titel</label>
+                                <input
+                                    id="bookTitle"
+                                    type="text"
+                                    value={bookFormData.title}
+                                    onChange={(e) => setBookFormData({...bookFormData, title: e.target.value})}
+                                    required
+                                />
+                            </div>
+                            
+                            <div className="admin-form-group">
+                                <label htmlFor="bookAuthor">Autor</label>
+                                <input
+                                    id="bookAuthor"
+                                    type="text"
+                                    value={bookFormData.author}
+                                    onChange={(e) => setBookFormData({...bookFormData, author: e.target.value})}
+                                    required
+                                />
+                            </div>
+                            
+                            <div className="admin-form-group">
+                                <label htmlFor="bookDescription">Beschreibung</label>
+                                <textarea
+                                    id="bookDescription"
+                                    value={bookFormData.description}
+                                    onChange={(e) => setBookFormData({...bookFormData, description: e.target.value})}
+                                    rows={3}
+                                />
+                            </div>
+                            
+                            <div className="admin-form-group">
+                                <label htmlFor="bookFile">Datei {!editingBook && '(PDF, DOCX)'}</label>
+                                <input
+                                    id="bookFile"
+                                    type="file"
+                                    accept=".pdf,.docx,.doc"
+                                    onChange={handleFileChange}
+                                    className="admin-file-input"
+                                />
+                                {bookFormData.fileUpload && (
+                                    <div className="admin-file-info">
+                                        <p><strong>Datei:</strong> {bookFormData.fileUpload.name}</p>
+                                        <p><strong>Größe:</strong> {(bookFormData.fileUpload.size / (1024 * 1024)).toFixed(2)} MB</p>
+                                        {bookFormData.fileUpload.size > 10 * 1024 * 1024 && (
+                                            <p className="admin-file-warning">Diese Datei ist zu groß! Maximale Größe: 10MB</p>
+                                        )}
+                                    </div>
+                                )}
+                                {editingBook && !bookFormData.fileUpload && (
+                                    <p className="admin-form-help">Lassen Sie dieses Feld leer, wenn Sie die bestehende Datei behalten möchten.</p>
+                                )}
+                            </div>
+                            
+                            <div className="admin-form-actions">
+                                <button type="button" className="admin-button secondary" onClick={() => setShowBookModal(false)}>Abbrechen</button>
+                                <button type="submit" className="admin-button primary">{editingBook ? 'Speichern' : 'Hinzufügen'}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            
             {/* Main Content */}
             <main className="admin-main-content">
                 <header className="admin-content-header">
@@ -775,11 +1035,84 @@ function AdminDashboard() {
                         {activeView === 'courses' && 'Kursverwaltung'}
                         {activeView === 'enrollments' && 'Einschreibungen'}
                         {activeView === 'certificates' && 'Zertifikate'}
+                        {activeView === 'books' && 'Books and Scripts'}
                         {activeView === 'settings' && 'Einstellungen'}
                     </h2>
                 </header>
 
                 <div className="admin-content-body">
+                    {activeView === 'books' && (
+                        <div className="admin-books-section">
+                            <div className="admin-section-header">
+                                <h3>Bücher und Skripte Verwaltung</h3>
+                                <button 
+                                    className="admin-add-button"
+                                    onClick={handleCreateBook}
+                                >
+                                    <span className="admin-add-icon">+</span>
+                                    Neues Buch/Skript hinzufügen
+                                </button>
+                            </div>
+                            
+                            <div className="admin-books-list">
+                                {books.length === 0 ? (
+                                    <div className="admin-info-message">
+                                        <span className="admin-info-icon">📚</span>
+                                        <p>Keine Bücher vorhanden. Fügen Sie ein neues Buch hinzu.</p>
+                                    </div>
+                                ) : (
+                                    books.map(book => (
+                                        <div className="admin-book-item" key={book.id}>
+                                            <div className="admin-book-info">
+                                                <span className="admin-book-icon">{book.icon}</span>
+                                                <div className="admin-book-details">
+                                                    <span className="admin-book-title">{book.title}</span>
+                                                    <span className="admin-book-author">von {book.author}</span>
+                                                </div>
+                                            </div>
+                                            <div className="admin-book-actions">
+                                                <button 
+                                                    className="admin-book-edit-btn"
+                                                    onClick={() => handleEditBook(book)}
+                                                >Bearbeiten</button>
+                                                <button 
+                                                    className="admin-book-delete-btn"
+                                                    onClick={() => setConfirmDialog({
+                                                        message: `Möchten Sie "${book.title}" wirklich löschen?`,
+                                                        onConfirm: async () => {
+                                                            try {
+                                                                await axios.delete(`http://localhost:8080/api/books/${book.id}`);
+                                                                showToast('Buch erfolgreich gelöscht!', 'success');
+                                                                // Lade die Bücher neu, um die Änderungen zu sehen
+                                                                loadBooks();
+                                                            } catch (error) {
+                                                                console.error('Fehler beim Löschen des Buches:', error);
+                                                                showToast('Fehler beim Löschen des Buches', 'error');
+                                                            }
+                                                            setConfirmDialog(null);
+                                                        }
+                                                    })}
+                                                >Löschen</button>
+                                                <button 
+                                                    className="admin-book-download-btn"
+                                                    onClick={() => window.open(`http://localhost:8080/api/books/${book.id}/download`, '_blank')}
+                                                >Herunterladen</button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                                
+                                {/* Hilfe-Nachricht immer anzeigen */}
+                                {books.length > 0 && (
+                                    <div className="admin-info-message" style={{marginTop: '20px'}}>
+                                        <span className="admin-info-icon">📚</span>
+                                        <p>Hier können Sie Bücher und Skripte für Ihre Kurse verwalten.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    
                     {activeView === 'overview' && (
                         <div className="admin-overview">
                             {/* Toast Benachrichtigung */}

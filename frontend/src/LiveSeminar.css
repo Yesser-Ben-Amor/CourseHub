@@ -11,18 +11,14 @@
     position: relative;
 }
 
-/* Zentrales Display */
+/* Screen Share Styles */
 .screen-share-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    margin: 20px auto;
     width: 100%;
-    height: 100%;
+    max-width: 900px;
 }
 
 .screen-share-placeholder {
@@ -31,6 +27,32 @@
     background-color: #161b22;
     border: 2px solid #30363d;
     border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.screen-share-placeholder-text {
+    color: #8b949e;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 20px;
+    max-width: 80%;
+}
+
+.screen-share-video {
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    min-height: 400px;
+    max-height: 80vh;
+    border: 2px solid #30363d;
+    border-radius: 4px;
+    background-color: #000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    display: block;
+    margin: 0 auto;
+    object-fit: contain;
 }
 
 /* Remote Video Styles */
@@ -59,6 +81,105 @@
     padding: 10px;
     background: rgba(0, 0, 0, 0.5);
     color: white;
+}
+
+/* Meet Controls */
+.meet-controls-bar {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+    z-index: 10;
+}
+
+/* Bildschirmfreigabe-Dropdown */
+.screen-share-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.screen-share-options {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 10px;
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 200px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 20;
+}
+
+.screen-share-option {
+    background-color: #21262d;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.screen-share-option:hover {
+    background-color: #30363d;
+    border-color: #58a6ff;
+}
+
+.screen-share-option:active {
+    transform: translateY(1px);
+}
+
+.chrome-hint {
+    margin-top: 12px;
+    padding: 10px;
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.chrome-hint p {
+    margin: 0 0 5px 0;
+    color: #f0883e;
+    font-weight: 500;
+}
+
+.chrome-hint ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #8b949e;
+}
+
+.chrome-hint li {
+    margin-bottom: 3px;
+}
+
+.screen-share-option.chrome-warning {
+    border-color: #f0883e;
+    position: relative;
+}
+
+.chrome-tab-note {
+    color: #f0883e;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+.screen-share-option.chrome-warning:hover {
+    border-color: #f0883e;
+    background-color: rgba(240, 136, 62, 0.1);
 }
 
 /* Lade- und Fehlerzustände */
