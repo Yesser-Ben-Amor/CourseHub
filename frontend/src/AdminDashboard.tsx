@@ -797,8 +797,8 @@ function AdminDashboard() {
         e.preventDefault();
         
         try {
-            // Prüfe die Dateigröße - max 10MB
-            const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in Bytes
+            // Prüfe die Dateigröße - max 15MB
+            const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB in Bytes
             
             if (bookFormData.fileUpload && bookFormData.fileUpload.size > MAX_FILE_SIZE) {
                 showToast(`Die Datei ist zu groß. Maximale Dateigröße: 10MB`, 'error');
@@ -850,8 +850,8 @@ function AdminDashboard() {
             const fileSizeInMB = file.size / (1024 * 1024);
             
             // Warnung bei großen Dateien
-            if (fileSizeInMB > 8) {
-                showToast(`Warnung: Die Datei ist ${fileSizeInMB.toFixed(2)}MB groß. Dateien über 10MB können nicht hochgeladen werden.`, 'info');
+            if (fileSizeInMB > 12) {
+                showToast(`Warnung: Die Datei ist ${fileSizeInMB.toFixed(2)}MB groß. Dateien über 15MB können nicht hochgeladen werden.`, 'info');
             }
             
             setBookFormData({
@@ -1006,8 +1006,8 @@ function AdminDashboard() {
                                     <div className="admin-file-info">
                                         <p><strong>Datei:</strong> {bookFormData.fileUpload.name}</p>
                                         <p><strong>Größe:</strong> {(bookFormData.fileUpload.size / (1024 * 1024)).toFixed(2)} MB</p>
-                                        {bookFormData.fileUpload.size > 10 * 1024 * 1024 && (
-                                            <p className="admin-file-warning">Diese Datei ist zu groß! Maximale Größe: 10MB</p>
+                                        {bookFormData.fileUpload.size > 15 * 1024 * 1024 && (
+                                            <p className="admin-file-warning">Diese Datei ist zu groß! Maximale Größe: 15MB</p>
                                         )}
                                     </div>
                                 )}
