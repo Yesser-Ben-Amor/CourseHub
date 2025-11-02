@@ -2,6 +2,7 @@ package org.example.backend.controller;
 
 import org.example.backend.entity.BookEntity;
 import org.example.backend.service.BookService;
+import org.example.backend.service.FeatureFlagService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,9 +23,11 @@ import java.util.stream.Collectors;
 public class BookController {
 
     private final BookService bookService;
+    private final FeatureFlagService featureFlagService;
 
-    public BookController(BookService bookService) {
+    public BookController(BookService bookService, FeatureFlagService featureFlagService) {
         this.bookService = bookService;
+        this.featureFlagService = featureFlagService;
     }
 
     @PostMapping
@@ -34,6 +37,13 @@ public class BookController {
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "courseId", required = false) Long courseId,
             @RequestParam(value = "file", required = false) MultipartFile file) {
+        // Prüfen, ob das Feature aktiviert ist
+        if (!featureFlagService.isFeatureEnabled("book-management")) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Book management feature is currently disabled");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+
         try {
             BookEntity bookEntity = bookService.addBook(title, author, description, courseId, file);
 
@@ -55,6 +65,13 @@ public class BookController {
 
     @GetMapping
     public ResponseEntity<List<Map<String, Object>>> getAllBooks() {
+        // Prüfen, ob das Feature aktiviert ist
+        if (!featureFlagService.isFeatureEnabled("book-management")) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Book management feature is currently disabled");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+
         List<BookEntity> books = bookService.getAllBooks();
 
         List<Map<String, Object>> response = books.stream().map(book -> {
@@ -73,6 +90,13 @@ public class BookController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getBookById(@PathVariable Long id) {
+        // Prüfen, ob das Feature aktiviert ist
+        if (!featureFlagService.isFeatureEnabled("book-management")) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Book management feature is currently disabled");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+
         try {
             BookEntity book = bookService.getBookById(id);
 
@@ -98,6 +122,13 @@ public class BookController {
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "courseId", required = false) Long courseId,
             @RequestParam(value = "file", required = false) MultipartFile file) {
+        // Prüfen, ob das Feature aktiviert ist
+        if (!featureFlagService.isFeatureEnabled("book-management")) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Book management feature is currently disabled");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+
         try {
             BookEntity bookEntity = bookService.updateBook(id, title, author, description, courseId, file);
 
@@ -121,6 +152,13 @@ public class BookController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteBook(@PathVariable Long id) {
+        // Prüfen, ob das Feature aktiviert ist
+        if (!featureFlagService.isFeatureEnabled("book-management")) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Book management feature is currently disabled");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        }
+
         try {
             bookService.deleteBook(id);
             Map<String, String> response = new HashMap<>();
@@ -137,6 +175,11 @@ public class BookController {
 
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> downloadBookFile(@PathVariable Long id) {
+        // Prüfen, ob das Feature aktiviert ist
+        if (!featureFlagService.isFeatureEnabled("book-management")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         try {
             Resource resource = bookService.getBookFileAsResource(id);
             BookEntity book = bookService.getBookById(id);

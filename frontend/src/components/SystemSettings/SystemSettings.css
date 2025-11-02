@@ -238,3 +238,36 @@
     background-color: #30363d;
     color: #8b949e;
 }
+
+/* Environment Variables Styles */
+.system-settings-environment {
+    overflow-x: auto; /* Horizontales Scrollen für die gesamte Tabelle ermöglichen */
+}
+
+.system-settings-environment table {
+    table-layout: fixed; /* Feste Spaltenbreiten */
+    width: 100%;
+}
+
+.system-settings-environment th:first-child {
+    width: 30%; /* Breite der ersten Spalte (Variable) */
+}
+
+.system-settings-environment th:last-child {
+    width: 70%; /* Breite der zweiten Spalte (Wert) */
+}
+
+.system-settings-environment td:first-child {
+    font-family: monospace;
+    font-weight: 500;
+    white-space: nowrap; /* Verhindert Zeilenumbrüche im Variablennamen */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Zeigt ... bei Überlauf an */
+}
+
+.system-settings-environment td:last-child {
+    font-family: monospace;
+    word-break: break-all; /* Bricht Wörter um, wenn nötig */
+    max-width: 0; /* Erzwingt text-overflow in Verbindung mit overflow: hidden */
+    overflow: hidden;
+}

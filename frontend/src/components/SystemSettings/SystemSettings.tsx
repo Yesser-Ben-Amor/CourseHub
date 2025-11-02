@@ -26,6 +26,9 @@ const SystemSettings: React.FC = () => {
     const [loggers, setLoggers] = useState<LoggerConfig[]>([]);
     const [metrics, setMetrics] = useState<Metrics>({});
     const [health, setHealth] = useState<any>({});
+    const [configProperties, setConfigProperties] = useState<ConfigProperty[]>([]);
+    const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>([]);
+    const [envVariables, setEnvVariables] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [editingProperty, setEditingProperty] = useState<string | null>(null);
@@ -40,15 +43,16 @@ const SystemSettings: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
+            let response;
             switch (activeTab) {
                 case 'properties':
-                    const propsResponse = await axios.get('/api/admin/system/properties');
-                    setProperties(propsResponse.data);
+                    response = await axios.get('/api/admin/system/properties');
+                    setProperties(response.data);
                     break;
                 case 'loggers':
-                    const loggersResponse = await axios.get('/api/admin/system/loggers');
+                    response = await axios.get('/api/admin/system/loggers');
                     const loggersList: LoggerConfig[] = [];
-                    Object.entries(loggersResponse.data.loggers).forEach(([name, config]: [string, any]) => {
+                    Object.entries(response.data.loggers).forEach(([name, config]: [string, any]) => {
                         loggersList.push({
                             name,
                             configuredLevel: config.configuredLevel,
@@ -58,12 +62,24 @@ const SystemSettings: React.FC = () => {
                     setLoggers(loggersList);
                     break;
                 case 'metrics':
-                    const metricsResponse = await axios.get('/api/admin/system/metrics');
-                    setMetrics(metricsResponse.data);
+                    response = await axios.get('/api/admin/system/metrics');
+                    setMetrics(response.data);
                     break;
                 case 'health':
-                    const healthResponse = await axios.get('/api/admin/system/health-summary');
-                    setHealth(healthResponse.data);
+                    response = await axios.get('/api/admin/system/health-summary');
+                    setHealth(response.data);
+                    break;
+                case 'config':
+                    response = await axios.get('/api/admin/system/config');
+                    setConfigProperties(response.data);
+                    break;
+                case 'features':
+                    response = await axios.get('/api/admin/system/features');
+                    setFeatureFlags(response.data);
+                    break;
+                case 'environment':
+                    response = await axios.get('/api/admin/system/environment/variables');
+                    setEnvVariables(response.data);
                     break;
             }
         } catch (err: any) {
@@ -94,6 +110,40 @@ const SystemSettings: React.FC = () => {
         } catch (err: any) {
             setError(err.response?.data?.message || 'Fehler beim Speichern');
             console.error('Fehler beim Speichern:', err);
+        }
+    };
+    
+    const handleSaveConfigProperty = async (key: string, value: string) => {
+        try {
+            await axios.put(`/api/admin/system/config/${key}`, {
+                key,
+                value
+            });
+
+            setConfigProperties(configProperties.map(prop =>
+                prop.key === key ? { ...prop, value } : prop
+            ));
+
+            setEditingProperty(null);
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Fehler beim Speichern der Konfiguration');
+            console.error('Fehler beim Speichern der Konfiguration:', err);
+        }
+    };
+    
+    const handleToggleFeature = async (key: string, enabled: boolean) => {
+        try {
+            await axios.put(`/api/admin/system/features/${key}`, {
+                key,
+                enabled
+            });
+
+            setFeatureFlags(featureFlags.map(flag =>
+                flag.key === key ? { ...flag, enabled } : flag
+            ));
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Fehler beim Ändern des Feature-Status');
+            console.error('Fehler beim Ändern des Feature-Status:', err);
         }
     };
 
@@ -133,6 +183,18 @@ const SystemSettings: React.FC = () => {
                     Eigenschaften
                 </button>
                 <button
+                    className={`system-settings-tab ${activeTab === 'config' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('config')}
+                >
+                    Konfiguration
+                </button>
+                <button
+                    className={`system-settings-tab ${activeTab === 'features' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('features')}
+                >
+                    Feature Flags
+                </button>
+                <button
                     className={`system-settings-tab ${activeTab === 'loggers' ? 'active' : ''}`}
                     onClick={() => setActiveTab('loggers')}
                 >
@@ -149,6 +211,12 @@ const SystemSettings: React.FC = () => {
                     onClick={() => setActiveTab('health')}
                 >
                     Gesundheit
+                </button>
+                <button
+                    className={`system-settings-tab ${activeTab === 'environment' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('environment')}
+                >
+                    Umgebung
                 </button>
             </div>
 
@@ -301,6 +369,138 @@ const SystemSettings: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        )}
+                        
+                        {activeTab === 'config' && (
+                            <div className="system-settings-config">
+                                <table className="system-settings-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Schlüssel</th>
+                                        <th>Wert</th>
+                                        <th>Beschreibung</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {configProperties.filter(prop =>
+                                        prop.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                        prop.description.toLowerCase().includes(searchTerm.toLowerCase())
+                                    ).map(property => (
+                                        <tr key={property.key}>
+                                            <td>{property.key}</td>
+                                            <td>
+                                                {editingProperty === property.key ? (
+                                                    <input
+                                                        type="text"
+                                                        value={propertyValue}
+                                                        onChange={(e) => setPropertyValue(e.target.value)}
+                                                    />
+                                                ) : (
+                                                    property.value
+                                                )}
+                                            </td>
+                                            <td>{property.description}</td>
+                                            <td>
+                                                {property.editable && (
+                                                    editingProperty === property.key ? (
+                                                        <>
+                                                            <button
+                                                                className="system-settings-button save"
+                                                                onClick={() => handleSaveConfigProperty(property.key, propertyValue)}
+                                                            >
+                                                                Speichern
+                                                            </button>
+                                                            <button
+                                                                className="system-settings-button cancel"
+                                                                onClick={() => setEditingProperty(null)}
+                                                            >
+                                                                Abbrechen
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <button
+                                                            className="system-settings-button edit"
+                                                            onClick={() => {
+                                                                setEditingProperty(property.key);
+                                                                setPropertyValue(property.value);
+                                                            }}
+                                                        >
+                                                            Bearbeiten
+                                                        </button>
+                                                    )
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                        
+                        {activeTab === 'features' && (
+                            <div className="system-settings-features">
+                                <table className="system-settings-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Status</th>
+                                        <th>Beschreibung</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {featureFlags.filter(flag =>
+                                        flag.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                        flag.description.toLowerCase().includes(searchTerm.toLowerCase())
+                                    ).map(flag => (
+                                        <tr key={flag.key}>
+                                            <td>{flag.key}</td>
+                                            <td>
+                                                <span className={`feature-status ${flag.enabled ? 'enabled' : 'disabled'}`}>
+                                                    {flag.enabled ? 'Aktiviert' : 'Deaktiviert'}
+                                                </span>
+                                            </td>
+                                            <td>{flag.description}</td>
+                                            <td>
+                                                <button
+                                                    className={`system-settings-button ${flag.enabled ? 'disable' : 'enable'}`}
+                                                    onClick={() => handleToggleFeature(flag.key, !flag.enabled)}
+                                                >
+                                                    {flag.enabled ? 'Deaktivieren' : 'Aktivieren'}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                        
+                        {activeTab === 'environment' && (
+                            <div className="system-settings-environment">
+                                <table className="system-settings-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Variable</th>
+                                        <th>Wert</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {Object.entries(envVariables)
+                                        .filter(([key, value]) => 
+                                            key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            value.toLowerCase().includes(searchTerm.toLowerCase())
+                                        )
+                                        .map(([key, value]) => (
+                                        <tr key={key}>
+                                            <td>{key}</td>
+                                            <td>{value}</td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
                             </div>
                         )}
                     </>

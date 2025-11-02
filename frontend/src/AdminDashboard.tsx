@@ -159,6 +159,11 @@ function AdminDashboard() {
         fileUpload: null as File | null
     });
     
+    // Feature Flags State
+    const [featureFlags, setFeatureFlags] = useState<Record<string, boolean>>({
+        'book-management': true // Standardmäßig aktiviert
+    });
+    
     // State für die Bücherliste
     const [books, setBooks] = useState<Array<{
         id: number;
@@ -190,6 +195,25 @@ function AdminDashboard() {
         icon: '📘'
     }]);
 
+    // Funktion zum Laden der Feature Flags
+    const loadFeatureFlags = async () => {
+        try {
+            const response = await axios.get('/api/admin/system/features');
+            const flags: Record<string, boolean> = {};
+            
+            // Konvertiere die Liste von Feature Flags in ein Objekt
+            response.data.forEach((flag: { key: string, enabled: boolean }) => {
+                flags[flag.key] = flag.enabled;
+            });
+            
+            setFeatureFlags(flags);
+            console.log('Feature Flags geladen:', flags);
+        } catch (error) {
+            console.error('Fehler beim Laden der Feature Flags:', error);
+            // Behalte die Standard-Flags bei Fehler
+        }
+    };
+    
     // Funktion zum Laden der Bücher aus der Datenbank
     const loadBooks = async () => {
         setLoading(true);
@@ -229,6 +253,7 @@ function AdminDashboard() {
         }
     };
 
+
     useEffect(() => {
         // Prüfe ob Admin eingeloggt ist
         const adminToken = localStorage.getItem('adminToken');
@@ -240,6 +265,9 @@ function AdminDashboard() {
         }
 
         setAdminUser(adminUsername || 'Admin');
+        
+        // Feature Flags laden
+        loadFeatureFlags();
         
         // Lade Statistics für Overview
         if (activeView === 'overview') {
@@ -266,9 +294,15 @@ function AdminDashboard() {
             loadEnrollments();
         }
         
-        // Lade Bücher wenn View aktiv ist
+        // Lade Bücher wenn View aktiv ist und Feature aktiviert ist
         if (activeView === 'books') {
-            loadBooks();
+            if (featureFlags['book-management']) {
+                loadBooks();
+            } else {
+                // Wenn Feature deaktiviert ist, zeige leere Liste
+                setBooks([]);
+                showToast('Die Bücherverwaltung ist derzeit deaktiviert.', 'error');
+            }
         }
     }, [navigate, activeView]);
 
@@ -1042,7 +1076,7 @@ function AdminDashboard() {
                 </header>
 
                 <div className="admin-content-body">
-                    {activeView === 'books' && (
+                    {activeView === 'books' && featureFlags['book-management'] && (
                         <div className="admin-books-section">
                             <div className="admin-section-header">
                                 <h3>Bücher und Skripte Verwaltung</h3>

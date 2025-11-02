@@ -18,13 +18,21 @@ public class FeatureFlagService {
     }
 
     private void initDefaultFeatureFlags() {
-        // Beispiel-Feature-Flags
+        // Bereits implementierte Features
         addFeatureFlag("user-registration", true, "Ermöglicht die Registrierung neuer Benutzer");
-        addFeatureFlag("social-login", true, "Ermöglicht die Anmeldung über soziale Netzwerke");
-        addFeatureFlag("course-rating", true, "Ermöglicht das Bewerten von Kursen");
-        addFeatureFlag("advanced-analytics", false, "Aktiviert erweiterte Analysen für Kurse");
-        addFeatureFlag("live-chat", false, "Aktiviert Live-Chat-Funktionalität");
-        addFeatureFlag("beta-features", false, "Aktiviert experimentelle Beta-Funktionen");
+        addFeatureFlag("social-login", true, "Ermöglicht die Anmeldung über soziale Netzwerke (GitHub, Google)");
+        addFeatureFlag("admin-dashboard", true, "Aktiviert das Admin-Dashboard für Administratoren");
+        addFeatureFlag("book-management", true, "Ermöglicht die Verwaltung von Büchern und Skripten");
+        
+        // Teilweise implementierte Features
+        addFeatureFlag("system-monitoring", true, "Aktiviert die Systemüberwachung mit Spring Actuator");
+        addFeatureFlag("dynamic-config", true, "Ermöglicht die dynamische Konfiguration zur Laufzeit");
+        
+        // Geplante Features (derzeit deaktiviert)
+        addFeatureFlag("course-enrollment", false, "Aktiviert das Einschreibungssystem für Kurse");
+        addFeatureFlag("course-rating", false, "Ermöglicht das Bewerten von Kursen");
+        addFeatureFlag("dark-mode", false, "Aktiviert den Dark Mode für die Benutzeroberfläche");
+        addFeatureFlag("advanced-search", false, "Aktiviert erweiterte Suchfunktionen");
     }
 
     public List<FeatureFlagDTO> getAllFeatureFlags() {
