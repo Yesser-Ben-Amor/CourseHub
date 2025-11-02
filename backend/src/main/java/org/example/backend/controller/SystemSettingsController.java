@@ -1,5 +1,4 @@
 // SystemSettingsController.java
-/*
 package org.example.backend.controller;
 
 import org.example.backend.dto.SystemPropertyDTO;
@@ -8,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.metrics.MetricsEndpoint;
 import org.springframework.boot.actuate.logging.LoggersEndpoint;
 import org.springframework.boot.actuate.env.EnvironmentEndpoint;
+import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -64,7 +64,8 @@ public class SystemSettingsController {
     @PostMapping("/loggers/{name}")
     public ResponseEntity<Void> setLoggerLevel(@PathVariable String name, @RequestBody Map<String, String> levelMap) {
         String level = levelMap.get("level");
-        loggersEndpoint.configureLogLevel(name, LoggersEndpoint.LogLevel.valueOf(level));
+        // Konvertiere den String in ein LogLevel-Objekt
+        loggersEndpoint.configureLogLevel(name, LogLevel.valueOf(level));
         return ResponseEntity.ok().build();
     }
 
@@ -89,4 +90,4 @@ public class SystemSettingsController {
     public ResponseEntity<Map<String, Object>> getHealthSummary() {
         return ResponseEntity.ok(systemSettingsService.getHealthSummary());
     }
-}*/
+}

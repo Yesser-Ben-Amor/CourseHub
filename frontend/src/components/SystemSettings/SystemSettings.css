@@ -71,6 +71,22 @@
 .system-settings-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.system-settings-loggers .system-settings-table th:nth-child(1) {
+    width: 45%;
+}
+
+.system-settings-loggers .system-settings-table th:nth-child(2),
+.system-settings-loggers .system-settings-table th:nth-child(3),
+.system-settings-loggers .system-settings-table th:nth-child(4) {
+    width: 18%;
+}
+
+.system-settings-loggers .system-settings-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .system-settings-table th,
@@ -115,12 +131,18 @@
     background-color: #21262d;
     color: #c9d1d9;
     border: 1px solid #30363d;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    width: 100%;
+    text-align: center;
+    margin-right: 0;
 }
 
 .system-settings-logger-actions {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 5px;
+    max-width: 100%;
 }
 
 .metrics-grid {

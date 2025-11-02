@@ -6,6 +6,7 @@ import devopsIcon from './assets/devops-icon.png';
 import kurseIcon from './assets/kurse.webp';
 import lernIcon from './assets/lern.webp';
 import kroneIcon from './assets/krone.webp';
+import SystemSettings from './components/SystemSettings/SystemSettings';
 
 interface Student {
     id: number;
@@ -1195,6 +1196,12 @@ function AdminDashboard() {
                                 <h3>Willkommen im Admin Dashboard!</h3>
                                 <p>Wählen Sie einen Bereich aus dem Menü, um zu beginnen.</p>
                             </div>
+                        </div>
+                    )}
+
+                    {activeView === 'settings' && (
+                        <div className="admin-section">
+                            <SystemSettings />
                         </div>
                     )}
 

@@ -245,38 +245,18 @@ const SystemSettings: React.FC = () => {
                                             <td>{logger.configuredLevel || 'Nicht konfiguriert'}</td>
                                             <td>{logger.effectiveLevel}</td>
                                             <td>
-                                                <div className="system-settings-logger-actions">
-                                                    <button
-                                                        className="system-settings-button level"
-                                                        onClick={() => handleSetLogLevel(logger.name, 'TRACE')}
-                                                    >
-                                                        TRACE
-                                                    </button>
-                                                    <button
-                                                        className="system-settings-button level"
-                                                        onClick={() => handleSetLogLevel(logger.name, 'DEBUG')}
-                                                    >
-                                                        DEBUG
-                                                    </button>
-                                                    <button
-                                                        className="system-settings-button level"
-                                                        onClick={() => handleSetLogLevel(logger.name, 'INFO')}
-                                                    >
-                                                        INFO
-                                                    </button>
-                                                    <button
-                                                        className="system-settings-button level"
-                                                        onClick={() => handleSetLogLevel(logger.name, 'WARN')}
-                                                    >
-                                                        WARN
-                                                    </button>
-                                                    <button
-                                                        className="system-settings-button level"
-                                                        onClick={() => handleSetLogLevel(logger.name, 'ERROR')}
-                                                    >
-                                                        ERROR
-                                                    </button>
-                                                </div>
+                                                <select 
+                                                    className="system-settings-level-select"
+                                                    value={logger.configuredLevel || ''}
+                                                    onChange={(e) => handleSetLogLevel(logger.name, e.target.value)}
+                                                >
+                                                    <option value="">Wählen...</option>
+                                                    <option value="TRACE">TRACE</option>
+                                                    <option value="DEBUG">DEBUG</option>
+                                                    <option value="INFO">INFO</option>
+                                                    <option value="WARN">WARN</option>
+                                                    <option value="ERROR">ERROR</option>
+                                                </select>
                                             </td>
                                         </tr>
                                     ))}
