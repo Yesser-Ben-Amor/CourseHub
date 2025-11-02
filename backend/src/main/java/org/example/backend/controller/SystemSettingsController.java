@@ -1,7 +1,11 @@
 // SystemSettingsController.java
 package org.example.backend.controller;
 
+import org.example.backend.dto.ConfigPropertyDTO;
+import org.example.backend.dto.FeatureFlagDTO;
 import org.example.backend.dto.SystemPropertyDTO;
+import org.example.backend.service.DynamicConfigurationService;
+import org.example.backend.service.FeatureFlagService;
 import org.example.backend.service.SystemSettingsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.metrics.MetricsEndpoint;
@@ -22,16 +26,22 @@ import java.util.Map;
 public class SystemSettingsController {
 
     private final SystemSettingsService systemSettingsService;
+    private final DynamicConfigurationService dynamicConfigService;
+    private final FeatureFlagService featureFlagService;
     private final MetricsEndpoint metricsEndpoint;
     private final LoggersEndpoint loggersEndpoint;
     private final EnvironmentEndpoint environmentEndpoint;
 
     @Autowired
     public SystemSettingsController(SystemSettingsService systemSettingsService,
+                                    DynamicConfigurationService dynamicConfigService,
+                                    FeatureFlagService featureFlagService,
                                     MetricsEndpoint metricsEndpoint,
                                     LoggersEndpoint loggersEndpoint,
                                     EnvironmentEndpoint environmentEndpoint) {
         this.systemSettingsService = systemSettingsService;
+        this.dynamicConfigService = dynamicConfigService;
+        this.featureFlagService = featureFlagService;
         this.metricsEndpoint = metricsEndpoint;
         this.loggersEndpoint = loggersEndpoint;
         this.environmentEndpoint = environmentEndpoint;
@@ -89,5 +99,56 @@ public class SystemSettingsController {
     @GetMapping("/health-summary")
     public ResponseEntity<Map<String, Object>> getHealthSummary() {
         return ResponseEntity.ok(systemSettingsService.getHealthSummary());
+    }
+    
+    // Neue Methoden für dynamische Konfiguration
+    @GetMapping("/config")
+    public ResponseEntity<List<ConfigPropertyDTO>> getDynamicConfigurations() {
+        return ResponseEntity.ok(dynamicConfigService.getDynamicProperties());
+    }
+
+    @GetMapping("/config/{key}")
+    public ResponseEntity<ConfigPropertyDTO> getDynamicConfiguration(@PathVariable String key) {
+        ConfigPropertyDTO property = dynamicConfigService.getDynamicProperty(key);
+        if (property == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(property);
+    }
+
+    @PutMapping("/config/{key}")
+    public ResponseEntity<ConfigPropertyDTO> updateDynamicConfiguration(
+            @PathVariable String key,
+            @RequestBody ConfigPropertyDTO property) {
+        return ResponseEntity.ok(dynamicConfigService.updateDynamicProperty(key, property.getValue()));
+    }
+
+    // Neue Methoden für Feature Flags
+    @GetMapping("/features")
+    public ResponseEntity<List<FeatureFlagDTO>> getFeatureFlags() {
+        return ResponseEntity.ok(featureFlagService.getAllFeatureFlags());
+    }
+
+    @GetMapping("/features/{key}")
+    public ResponseEntity<FeatureFlagDTO> getFeatureFlag(@PathVariable String key) {
+        FeatureFlagDTO flag = featureFlagService.getFeatureFlag(key);
+        if (flag == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(flag);
+    }
+
+    @PutMapping("/features/{key}")
+    public ResponseEntity<FeatureFlagDTO> updateFeatureFlag(
+            @PathVariable String key,
+            @RequestBody FeatureFlagDTO flag) {
+        return ResponseEntity.ok(featureFlagService.updateFeatureFlag(key, flag.isEnabled()));
+    }
+
+    // Erweiterte Methode für Umgebungsvariablen
+    @GetMapping("/environment/variables")
+    public ResponseEntity<Map<String, String>> getEnvironmentVariables() {
+        Map<String, String> variables = systemSettingsService.getEnvironmentVariables();
+        return ResponseEntity.ok(variables);
     }
 }

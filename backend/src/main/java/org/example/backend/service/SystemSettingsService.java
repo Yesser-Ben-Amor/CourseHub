@@ -93,4 +93,26 @@ public class SystemSettingsService {
 
         return health;
     }
+    
+    public Map<String, String> getEnvironmentVariables() {
+        Map<String, String> variables = new HashMap<>();
+        
+        // Sichere Umgebungsvariablen (keine Passwörter oder Secrets)
+        Map<String, String> env = System.getenv();
+        for (String key : env.keySet()) {
+            // Filtern Sie sensible Informationen
+            if (!key.toLowerCase().contains("password") && 
+                !key.toLowerCase().contains("secret") && 
+                !key.toLowerCase().contains("key")) {
+                variables.put(key, env.get(key));
+            }
+        }
+        
+        // Fügen Sie einige JVM-Eigenschaften hinzu
+        variables.put("java.version", System.getProperty("java.version"));
+        variables.put("java.home", System.getProperty("java.home"));
+        variables.put("user.dir", System.getProperty("user.dir"));
+        
+        return variables;
+    }
 }
