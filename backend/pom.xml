@@ -103,6 +103,12 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Spring Actuator für Systemmetriken und Monitoring -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <!-- Tests -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

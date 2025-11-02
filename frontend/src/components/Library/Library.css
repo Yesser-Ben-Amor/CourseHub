@@ -2,6 +2,10 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    background-color: #0d1117;
+}
+body {
+    background-color: #0d1117;
 }
 
 .library-header {
@@ -11,7 +15,7 @@
 }
 
 .library-back-btn {
-    background-color: #1f6feb;
+    background-color: green;
     color: white;
     border: none;
     border-radius: 6px;
@@ -26,7 +30,7 @@
 }
 
 .library-back-btn:hover {
-    background-color: #388bfd;
+    background-color: magenta;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }

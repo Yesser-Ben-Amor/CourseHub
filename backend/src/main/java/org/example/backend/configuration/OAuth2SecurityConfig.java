@@ -33,6 +33,8 @@ public class OAuth2SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/**").permitAll()
+                        .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .anyRequest().permitAll() // Für Testing - später auf authenticated() ändern
                 )
                 .oauth2Login(oauth2 -> oauth2
