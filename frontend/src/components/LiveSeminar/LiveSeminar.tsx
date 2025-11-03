@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSeminar } from '../../hooks/useSeminar';
 import VideoSection from './VideoSection';
 import Whiteboard from './Whiteboard';
+import SimpleChatComponent from './SimpleChatComponent';
 import type { User } from '../../types/seminar.types';
 import '../../LiveSeminar.css';
 
@@ -12,6 +13,7 @@ const LiveSeminar: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
     const [isInstructor, setIsInstructor] = useState(false);
     const [activeView, setActiveView] = useState<'video' | 'whiteboard' | 'files'>('video');
+    const [showChat, setShowChat] = useState<boolean>(false);
     const [showUploadDialog, setShowUploadDialog] = useState<boolean>(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadDescription, setUploadDescription] = useState<string>('');
@@ -129,200 +131,218 @@ const LiveSeminar: React.FC = () => {
     
     return (
         <div className="live-seminar" style={{ position: 'relative' }}>
-            {activeView === 'video' ? (
-                <VideoSection 
-                    isInstructor={isInstructor} 
-                    user={user}
-                    seminarId={seminarId || '1'}
-                />
-            ) : activeView === 'whiteboard' ? (
-                <Whiteboard
-                    drawings={drawings || []}
-                    user={user}
-                    isInstructor={isInstructor}
-                    onSaveDrawing={saveDrawing}
-                    onClearWhiteboard={clearWhiteboard}
-                />
-            ) : (
-                <div className="files-container">
-                    <div className="files-header">
-                        <h2>Dateien</h2>
-                        {files.length > 0 && isInstructor && (
-                            <button 
-                                className="clear-files-btn"
-                                onClick={() => {
-                                    // Bestätigungsdialog anzeigen
-                                    setConfirmDialog({
-                                        show: true,
-                                        message: 'Möchten Sie wirklich ALLE Dateien löschen?',
-                                        onConfirm: () => {
-                                            // Zeige Info-Benachrichtigung an
-                                            setNotification({
-                                                message: 'Lösche alle Dateien...',
-                                                type: 'info'
-                                            });
-                                        
-                                        // Lösche alle Dateien nacheinander
-                                        Promise.all(files.map(file => deleteFile(file.id)))
-                                            .then(() => {
-                                                // Erfolgsmeldung anzeigen
-                                                setNotification({
-                                                    message: 'Alle Dateien erfolgreich gelöscht!',
-                                                    type: 'success'
-                                                });
-                                                
-                                                // Benachrichtigung nach 3 Sekunden ausblenden
-                                                setTimeout(() => {
-                                                    setNotification({message: '', type: null});
-                                                }, 3000);
-                                            })
-                                            .catch(error => {
-                                                console.error('Fehler beim Löschen aller Dateien:', error);
-                                                setNotification({
-                                                    message: 'Fehler beim Löschen einiger Dateien.',
-                                                    type: 'error'
-                                                });
-                                                
-                                                // Benachrichtigung nach 5 Sekunden ausblenden
-                                                setTimeout(() => {
-                                                    setNotification({message: '', type: null});
-                                                }, 5000);
-                                            });
-                                        }
-                                    });
-                                }}
-                            >
-                                Alle Dateien löschen
-                            </button>
-                        )}
-                    </div>
-                    {files.length === 0 ? (
-                        <p className="no-files">Keine Dateien vorhanden</p>
-                    ) : (
-                        <div className="files-list">
-                            {files.map((file, index) => (
-                                <div key={index} className="file-item">
-                                    <div className="file-content">
-                                        <div className="file-icon">
-                                            {file.fileType?.includes('image') ? '🖼️' : 
-                                             file.fileType?.includes('pdf') ? '📄' : 
-                                             file.fileType?.includes('video') ? '🎬' : 
-                                             file.fileType?.includes('audio') ? '🎵' : '📁'}
-                                        </div>
-                                        <div className="file-details">
-                                            <div className="file-name">{file.fileName}</div>
-                                            <div className="file-meta">
-                                                <span className="file-uploader">{file.uploadedBy}</span>
-                                                <span className="file-date">{new Date(file.uploadDate).toLocaleDateString()}</span>
-                                            </div>
-                                            {file.description && (
-                                                <div className="file-description">{file.description}</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="file-actions">
-                                        <button 
-                                            className="file-download"
-                                            onClick={() => {
+            <div className={`main-content-area ${showChat ? 'with-chat' : 'without-chat'}`}>
+                {activeView === 'video' ? (
+                    <VideoSection 
+                        isInstructor={isInstructor} 
+                        user={user}
+                        seminarId={seminarId || '1'}
+                    />
+                ) : activeView === 'whiteboard' ? (
+                    <Whiteboard
+                        drawings={drawings || []}
+                        user={user}
+                        isInstructor={isInstructor}
+                        onSaveDrawing={saveDrawing}
+                        onClearWhiteboard={clearWhiteboard}
+                    />
+                ) : (
+                    <div className="files-container">
+                        <div className="files-header">
+                            <h2>Dateien</h2>
+                            {files.length > 0 && isInstructor && (
+                                <button 
+                                    className="clear-files-btn"
+                                    onClick={() => {
+                                        // Bestätigungsdialog anzeigen
+                                        setConfirmDialog({
+                                            show: true,
+                                            message: 'Möchten Sie wirklich ALLE Dateien löschen?',
+                                            onConfirm: () => {
                                                 // Zeige Info-Benachrichtigung an
                                                 setNotification({
-                                                    message: 'Versuche Download zu starten...',
+                                                    message: 'Lösche alle Dateien...',
                                                     type: 'info'
                                                 });
-                                                
-                                                // Verschiedene mögliche URLs testen
-                                                const urls = [
-                                                    `http://localhost:8080/api/seminars/${seminarId}/files/${file.id}/download`,
-                                                    `http://localhost:8080/api/seminars/${seminarId}/files/download/${file.id}`,
-                                                    `http://localhost:8080/api/files/${file.id}/download`
-                                                ];
-                                                
-                                                // Öffne die erste URL in einem neuen Tab
-                                                window.open(urls[0], '_blank');
-                                                
-                                                // Hinweis nach 3 Sekunden anzeigen
-                                                setTimeout(() => {
+                                            
+                                            // Lösche alle Dateien nacheinander
+                                            Promise.all(files.map(file => deleteFile(file.id)))
+                                                .then(() => {
+                                                    // Erfolgsmeldung anzeigen
                                                     setNotification({
-                                                        message: 'Falls der Download nicht funktioniert, ist die Funktion im Backend nicht vollständig implementiert.',
-                                                        type: 'info'
+                                                        message: 'Alle Dateien erfolgreich gelöscht!',
+                                                        type: 'success'
                                                     });
-                                                }, 3000);
                                                 
-                                                // Benachrichtigung nach weiteren 5 Sekunden ausblenden
-                                                setTimeout(() => {
-                                                    setNotification({message: '', type: null});
-                                                }, 8000);
-                                            }}
-                                        >
-                                            Download
-                                        </button>
-                                        
-                                        {isInstructor && (
-                                            <button 
-                                                className="file-delete"
-                                                onClick={() => {
-                                                    // Bestätigungsdialog anzeigen
-                                                    setConfirmDialog({
-                                                        show: true,
-                                                        message: `Möchten Sie die Datei "${file.fileName}" wirklich löschen?`,
-                                                        onConfirm: () => {
-                                                            // Zeige Info-Benachrichtigung an
-                                                            setNotification({
-                                                                message: 'Lösche Datei...',
-                                                                type: 'info'
-                                                            });
-                                                            
-                                                            // Lösche die Datei
-                                                            deleteFile(file.id)
-                                                                .then(() => {
-                                                                    // Erfolgsmeldung anzeigen
-                                                                    setNotification({
-                                                                        message: 'Datei erfolgreich gelöscht!',
-                                                                        type: 'success'
-                                                                    });
-                                                                    
-                                                                    // Benachrichtigung nach 3 Sekunden ausblenden
-                                                                    setTimeout(() => {
-                                                                        setNotification({message: '', type: null});
-                                                                    }, 3000);
-                                                                })
-                                                                .catch(error => {
-                                                                    console.error('Fehler beim Löschen:', error);
-                                                                    setNotification({
-                                                                        message: 'Fehler beim Löschen der Datei.',
-                                                                        type: 'error'
-                                                                    });
-                                                                    
-                                                                    // Benachrichtigung nach 5 Sekunden ausblenden
-                                                                    setTimeout(() => {
-                                                                        setNotification({message: '', type: null});
-                                                                    }, 5000);
-                                                                });
-                                                        }
+                                                    // Benachrichtigung nach 3 Sekunden ausblenden
+                                                    setTimeout(() => {
+                                                        setNotification({message: '', type: null});
+                                                    }, 3000);
+                                                })
+                                                .catch(error => {
+                                                    console.error('Fehler beim Löschen aller Dateien:', error);
+                                                    setNotification({
+                                                        message: 'Fehler beim Löschen einiger Dateien.',
+                                                        type: 'error'
                                                     });
-                                                }}
-                                            >
-                                                Löschen
-                                            </button>
-                                        )}
-                                        
-                                        <div className="file-info-panel">
-                                            <div className="file-details-expanded">
-                                                <p><strong>Dateiname:</strong> {file.fileName}</p>
-                                                <p><strong>Typ:</strong> {file.fileType}</p>
-                                                <p><strong>Größe:</strong> {Math.round(file.fileSize / 1024)} KB</p>
-                                                <p><strong>Hochgeladen von:</strong> {file.uploadedBy}</p>
-                                                <p><strong>Datum:</strong> {new Date(file.uploadTime).toLocaleString()}</p>
+                                                
+                                                    // Benachrichtigung nach 5 Sekunden ausblenden
+                                                    setTimeout(() => {
+                                                        setNotification({message: '', type: null});
+                                                    }, 5000);
+                                                });
+                                            }
+                                        });
+                                    }}
+                                >
+                                    Alle Dateien löschen
+                                </button>
+                            )}
+                        </div>
+                        {files.length === 0 ? (
+                            <p className="no-files">Keine Dateien vorhanden</p>
+                        ) : (
+                            <div className="files-list">
+                                {files.map((file, index) => (
+                                    <div key={index} className="file-item">
+                                        <div className="file-content">
+                                            <div className="file-icon">
+                                                {file.fileType?.includes('image') ? '🖼️' : 
+                                                 file.fileType?.includes('pdf') ? '📄' : 
+                                                 file.fileType?.includes('video') ? '🎬' : 
+                                                 file.fileType?.includes('audio') ? '🎵' : '📁'}
+                                            </div>
+                                            <div className="file-details">
+                                                <div className="file-name">{file.fileName}</div>
+                                                <div className="file-meta">
+                                                    <span className="file-uploader">{file.uploadedBy}</span>
+                                                    <span className="file-date">{new Date(file.uploadTime).toLocaleDateString()}</span>
+                                                </div>
                                                 {file.description && (
-                                                    <p><strong>Beschreibung:</strong> {file.description}</p>
+                                                    <div className="file-description">{file.description}</div>
                                                 )}
                                             </div>
                                         </div>
+                                        
+                                        <div className="file-actions">
+                                            <button 
+                                                className="file-download"
+                                                onClick={() => {
+                                                    // Zeige Info-Benachrichtigung an
+                                                    setNotification({
+                                                        message: 'Versuche Download zu starten...',
+                                                        type: 'info'
+                                                    });
+                                                    
+                                                    // Verschiedene mögliche URLs testen
+                                                    const urls = [
+                                                        `http://localhost:8080/api/seminars/${seminarId}/files/${file.id}/download`,
+                                                        `http://localhost:8080/api/seminars/${seminarId}/files/download/${file.id}`,
+                                                        `http://localhost:8080/api/files/${file.id}/download`
+                                                    ];
+                                                    
+                                                    // Öffne die erste URL in einem neuen Tab
+                                                    window.open(urls[0], '_blank');
+                                                    
+                                                    // Hinweis nach 3 Sekunden anzeigen
+                                                    setTimeout(() => {
+                                                        setNotification({
+                                                            message: 'Falls der Download nicht funktioniert, ist die Funktion im Backend nicht vollständig implementiert.',
+                                                            type: 'info'
+                                                        });
+                                                    }, 3000);
+                                                    
+                                                    // Benachrichtigung nach weiteren 5 Sekunden ausblenden
+                                                    setTimeout(() => {
+                                                        setNotification({message: '', type: null});
+                                                    }, 8000);
+                                                }}
+                                            >
+                                                Download
+                                            </button>
+                                            
+                                            {isInstructor && (
+                                                <button 
+                                                    className="file-delete"
+                                                    onClick={() => {
+                                                        // Bestätigungsdialog anzeigen
+                                                        setConfirmDialog({
+                                                            show: true,
+                                                            message: `Möchten Sie die Datei "${file.fileName}" wirklich löschen?`,
+                                                            onConfirm: () => {
+                                                                // Zeige Info-Benachrichtigung an
+                                                                setNotification({
+                                                                    message: 'Lösche Datei...',
+                                                                    type: 'info'
+                                                                });
+                                                                
+                                                                // Lösche die Datei
+                                                                deleteFile(file.id)
+                                                                    .then(() => {
+                                                                        // Erfolgsmeldung anzeigen
+                                                                        setNotification({
+                                                                            message: 'Datei erfolgreich gelöscht!',
+                                                                            type: 'success'
+                                                                        });
+                                                                        
+                                                                        // Benachrichtigung nach 3 Sekunden ausblenden
+                                                                        setTimeout(() => {
+                                                                            setNotification({message: '', type: null});
+                                                                        }, 3000);
+                                                                    })
+                                                                    .catch(error => {
+                                                                        console.error('Fehler beim Löschen:', error);
+                                                                        setNotification({
+                                                                            message: 'Fehler beim Löschen der Datei.',
+                                                                            type: 'error'
+                                                                        });
+                                                                        
+                                                                        // Benachrichtigung nach 5 Sekunden ausblenden
+                                                                        setTimeout(() => {
+                                                                            setNotification({message: '', type: null});
+                                                                        }, 5000);
+                                                                    });
+                                                            }
+                                                        });
+                                                    }}
+                                                >
+                                                    Löschen
+                                                </button>
+                                            )}
+                                            
+                                            <div className="file-info-panel">
+                                                <div className="file-details-expanded">
+                                                    <p><strong>Dateiname:</strong> {file.fileName}</p>
+                                                    <p><strong>Typ:</strong> {file.fileType}</p>
+                                                    <p><strong>Größe:</strong> {Math.round(file.fileSize / 1024)} KB</p>
+                                                    <p><strong>Hochgeladen von:</strong> {file.uploadedBy}</p>
+                                                    <p><strong>Datum:</strong> {new Date(file.uploadTime).toLocaleString()}</p>
+                                                    {file.description && (
+                                                        <p><strong>Beschreibung:</strong> {file.description}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+            
+            {/* Chat-Bereich auf der rechten Seite */}
+            {showChat && (
+                <div className="side-chat-container">
+                    <div className="chat-header-with-close">
+                        <h2>Live-Chat</h2>
+                        <button className="close-chat-btn" onClick={() => setShowChat(false)}>&times;</button>
+                    </div>
+                    {user && (
+                        <SimpleChatComponent 
+                            seminarId={seminarId || '1'}
+                            username={user.username}
+                        />
                     )}
                 </div>
             )}
@@ -390,6 +410,16 @@ const LiveSeminar: React.FC = () => {
                     disabled={activeView !== 'files'}
                 >
                     Datei hochladen
+                </button>
+                
+                <button 
+                    className={`side-menu-button ${showChat ? 'active' : ''}`}
+                    onClick={() => {
+                        console.log('Chat-Button geklickt');
+                        setShowChat(!showChat);
+                    }}
+                >
+                    {showChat ? 'Chat schließen' : 'Chat öffnen'}
                 </button>
                 
                 <button 

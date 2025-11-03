@@ -11,6 +11,95 @@
     position: relative;
 }
 
+/* Neues Layout mit Hauptbereich und Seitenchat */
+.main-content-area {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* Hauptinhalt-Container (Video, Whiteboard, Dateien) */
+.main-content-area > *:first-child {
+    flex: 1;
+    width: calc(100% - 350px); /* Breite abzüglich Chat-Breite, wenn Chat angezeigt wird */
+    transition: width 0.3s ease;
+}
+
+.main-content-area:not(:has(.side-chat-container)) > *:first-child {
+    width: 100%; /* Volle Breite, wenn kein Chat angezeigt wird */
+}
+
+/* Seitlicher Chat-Container */
+.side-chat-container {
+    width: 350px;
+    height: 100vh;
+    border-left: 1px solid #30363d;
+    background-color: #0d1117;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: width 0.3s ease;
+    position: relative;
+    z-index: 10;
+}
+
+/* Chat-Header mit Schließen-Button */
+.chat-header-with-close {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background-color: #075e54; /* WhatsApp dark green */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.chat-header-with-close h2 {
+    margin: 0;
+    font-size: 16px;
+    color: white;
+    font-weight: 500;
+}
+
+.close-chat-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+}
+
+.close-chat-btn:hover {
+    opacity: 0.8;
+}
+
+/* Video Container */
+.video-section {
+    flex: 1;
+    height: 100vh;
+    background-color: #000;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+/* Whiteboard Container */
+.whiteboard {
+    flex: 1;
+    height: 100vh;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+}
+
 /* Screen Share Styles */
 .screen-share-container {
     display: flex;
@@ -426,12 +515,15 @@
 
 /* Files Container */
 .files-container {
-    width: 100%;
+    flex: 1;
     height: 100vh;
     padding: 30px;
     overflow-y: auto;
     background-color: #000;
     color: #fff;
+    width: 100%;
+    position: relative;
+    z-index: 1;
 }
 
 /* Files Header */
@@ -937,6 +1029,18 @@ text-decoration: none;
 }
 
 .upload-cancel:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.upload-submit:hover {
+    background-color: #2ea043;
+}
+
+.upload-cancel:disabled,
+.upload-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}.upload-cancel:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
