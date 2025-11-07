@@ -1,0 +1,146 @@
+.search-results-container {
+  padding: 20px;
+  background-color: #1e1e2f;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
+.search-loading,
+.search-no-results {
+  padding: 20px;
+  text-align: center;
+  color: #8a8d93;
+  font-style: italic;
+  background-color: #1e1e2f;
+  border-radius: 10px;
+  margin: 20px 0;
+}
+
+.search-results-title {
+  color: #ffffff;
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #2d2d44;
+  padding-bottom: 10px;
+}
+
+.search-results-count {
+  color: #8a8d93;
+  margin-bottom: 5px;
+}
+
+.search-reset-button {
+  background-color: #1e1e2f;
+  color: #6c63ff;
+  border: 1px solid #6c63ff;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-reset-button:hover {
+  background-color: #6c63ff;
+  color: #ffffff;
+}
+
+.search-results-section {
+  margin-bottom: 30px;
+}
+
+.search-results-section-title {
+  color: #6c63ff;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-results-section-title i {
+  font-size: 1rem;
+}
+
+.search-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.search-result-card {
+  background-color: #252547;
+  border-radius: 8px;
+  padding: 15px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.search-result-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.student-card {
+  border-left: 4px solid #4caf50;
+}
+
+.teacher-card {
+  border-left: 4px solid #2196f3;
+}
+
+.book-card {
+  border-left: 4px solid #ff9800;
+}
+
+.course-card {
+  border-left: 4px solid #e91e63;
+}
+
+.search-result-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.search-result-icon {
+  font-size: 1.5rem;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: #1e1e2f;
+  border-radius: 50%;
+}
+
+.search-result-title {
+  color: #ffffff;
+  font-size: 1.1rem;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.search-result-details {
+  color: #b4b6bd;
+  font-size: 0.9rem;
+}
+
+.search-result-details p {
+  margin: 5px 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.search-result-details strong {
+  color: #8a8d93;
+  margin-right: 5px;
+}
+
+@media (max-width: 768px) {
+  .search-results-grid {
+    grid-template-columns: 1fr;
+  }
+}

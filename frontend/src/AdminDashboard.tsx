@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './AdminDashboard.css';
@@ -6,6 +6,8 @@ import devopsIcon from './assets/devops-icon.png';
 import kurseIcon from './assets/kurse.webp';
 import lernIcon from './assets/lern.webp';
 import kroneIcon from './assets/krone.webp';
+import SearchResults from './components/Search/SearchResults';
+import SearchComponent from './components/Search/SearchComponent';
 
 interface Student {
     id: number;
@@ -157,6 +159,13 @@ function AdminDashboard() {
         courseId: 0,
         fileUpload: null as File | null
     });
+    
+    // States für die Suchfunktion
+    const [isSearching, setIsSearching] = useState(false);
+    const [hasSearched, setHasSearched] = useState(false);
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchFilter, setSearchFilter] = useState('all');
+    const searchComponentRef = useRef<SearchComponentHandle>(null);
     
     // State für die Bücherliste
     const [books, setBooks] = useState<Array<{
@@ -451,9 +460,112 @@ function AdminDashboard() {
         try {
             const response = await axios.get('http://localhost:8080/api/courses');
             console.log('Kurse geladen:', response.data);
-            setCourses(response.data);
+            if (response.data && response.data.length > 0) {
+                setCourses(response.data);
+            } else {
+                // Fallback zu Mockdaten, wenn keine Kurse zurückgegeben werden
+                console.log('Keine Kurse vom Backend erhalten, verwende Mockdaten');
+                const mockCourses: Course[] = [
+                    {
+                        id: 1,
+                        name: 'Einführung in die Informatik',
+                        description: 'Grundlagen der Informatik für Anfänger',
+                        learningPaths: [
+                            {
+                                id: 1,
+                                level: 'Anfänger',
+                                description: 'Grundlegende Konzepte',
+                                points: 100,
+                                durationWeeks: 8,
+                                overview: 'Einführung in die Grundlagen der Informatik'
+                            }
+                        ]
+                    },
+                    {
+                        id: 2,
+                        name: 'Webentwicklung mit React',
+                        description: 'Moderne Frontend-Entwicklung mit React und TypeScript',
+                        learningPaths: [
+                            {
+                                id: 2,
+                                level: 'Fortgeschrittene',
+                                description: 'Fortgeschrittene Konzepte',
+                                points: 150,
+                                durationWeeks: 10,
+                                overview: 'Vertiefte Kenntnisse in React'
+                            }
+                        ]
+                    },
+                    {
+                        id: 3,
+                        name: 'Backend-Entwicklung mit Spring Boot',
+                        description: 'Entwicklung von RESTful APIs mit Spring Boot',
+                        learningPaths: [
+                            {
+                                id: 3,
+                                level: 'Profis',
+                                description: 'Professionelle Anwendungen',
+                                points: 200,
+                                durationWeeks: 12,
+                                overview: 'Fortgeschrittene Backend-Entwicklung'
+                            }
+                        ]
+                    }
+                ];
+                setCourses(mockCourses);
+            }
         } catch (error) {
             console.error('Fehler beim Laden der Kurse:', error);
+            // Fallback zu Mockdaten bei Fehlern
+            console.log('Fehler beim Laden der Kurse, verwende Mockdaten');
+            const mockCourses: Course[] = [
+                {
+                    id: 1,
+                    name: 'Einführung in die Informatik',
+                    description: 'Grundlagen der Informatik für Anfänger',
+                    learningPaths: [
+                        {
+                            id: 1,
+                            level: 'Anfänger',
+                            description: 'Grundlegende Konzepte',
+                            points: 100,
+                            durationWeeks: 8,
+                            overview: 'Einführung in die Grundlagen der Informatik'
+                        }
+                    ]
+                },
+                {
+                    id: 2,
+                    name: 'Webentwicklung mit React',
+                    description: 'Moderne Frontend-Entwicklung mit React und TypeScript',
+                    learningPaths: [
+                        {
+                            id: 2,
+                            level: 'Fortgeschrittene',
+                            description: 'Fortgeschrittene Konzepte',
+                            points: 150,
+                            durationWeeks: 10,
+                            overview: 'Vertiefte Kenntnisse in React'
+                        }
+                    ]
+                },
+                {
+                    id: 3,
+                    name: 'Backend-Entwicklung mit Spring Boot',
+                    description: 'Entwicklung von RESTful APIs mit Spring Boot',
+                    learningPaths: [
+                        {
+                            id: 3,
+                            level: 'Profis',
+                            description: 'Professionelle Anwendungen',
+                            points: 200,
+                            durationWeeks: 12,
+                            overview: 'Fortgeschrittene Backend-Entwicklung'
+                        }
+                    ]
+                }
+            ];
+            setCourses(mockCourses);
         } finally {
             setLoading(false);
         }
@@ -865,6 +977,178 @@ function AdminDashboard() {
         setToast({ message, type });
         setTimeout(() => setToast(null), 3000);
     };
+    
+    const resetSearch = () => {
+        setHasSearched(false);
+        setSearchResults([]);
+        // Leere das Suchfeld
+        if (searchComponentRef.current) {
+            searchComponentRef.current.resetSearch();
+        }
+    };
+    
+    const handleSearch = async (query: string, filter: string) => {
+        setIsSearching(true);
+        setHasSearched(true);
+        
+        try {
+            let results: any[] = [];
+            const searchTerm = query.toLowerCase();
+            
+            // Sammle alle Daten aus den verschiedenen Bereichen
+            let allStudents = [];
+            let allTeachers = [];
+            let allBooks = [];
+            let allCourses = [];
+            
+            try {
+                // Versuche, Daten von der API zu holen
+                const studentsResponse = await axios.get('http://localhost:8080/api/users');
+                const teachersResponse = await axios.get('http://localhost:8080/api/teachers');
+                const booksResponse = await axios.get('http://localhost:8080/api/books');
+                const coursesResponse = await axios.get('http://localhost:8080/api/courses');
+                
+                allStudents = studentsResponse.data;
+                allTeachers = teachersResponse.data;
+                allBooks = booksResponse.data;
+                allCourses = coursesResponse.data;
+            } catch (error) {
+                console.error('Fehler beim Laden der Daten von der API:', error);
+                // Fallback zu lokalen Daten
+                allStudents = students;
+                allTeachers = teachers;
+                allBooks = books;
+                allCourses = courses;
+            }
+            
+            // Suche basierend auf dem Filter
+            switch (filter) {
+                case 'name':
+                    // Suche nach Namen (Studenten und Dozenten)
+                    const studentsByName = allStudents.filter(student => 
+                        student.username.toLowerCase().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'student' }));
+                    
+                    const teachersByName = allTeachers.filter(teacher => 
+                        teacher.firstName.toLowerCase().includes(searchTerm) || 
+                        teacher.lastName.toLowerCase().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'teacher' }));
+                    
+                    results = [...studentsByName, ...teachersByName];
+                    break;
+                    
+                case 'id':
+                    // Suche nach ID (alle Entitäten)
+                    const studentsById = allStudents.filter(student => 
+                        student.id.toString().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'student' }));
+                    
+                    const teachersById = allTeachers.filter(teacher => 
+                        teacher.id.toString().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'teacher' }));
+                    
+                    const booksById = allBooks.filter(book => 
+                        book.id.toString().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'book' }));
+                    
+                    const coursesById = allCourses.filter(course => 
+                        course.id.toString().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'course' }));
+                    
+                    results = [...studentsById, ...teachersById, ...booksById, ...coursesById];
+                    break;
+                    
+                case 'email':
+                    // Suche nach E-Mail (nur Studenten)
+                    results = allStudents.filter(student => 
+                        student.email.toLowerCase().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'student' }));
+                    break;
+                    
+                case 'date':
+                    // Suche nach Datum (Dozenten Geburtsdatum, Studenten Erstellungsdatum)
+                    const studentsByDate = allStudents.filter(student => 
+                        student.createdAt.toLowerCase().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'student' }));
+                    
+                    const teachersByDate = allTeachers.filter(teacher => 
+                        teacher.birthDate.toLowerCase().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'teacher' }));
+                    
+                    results = [...studentsByDate, ...teachersByDate];
+                    break;
+                    
+                case 'subject':
+                    // Suche nach Fach (nur Dozenten)
+                    results = allTeachers.filter(teacher => 
+                        teacher.subject.toLowerCase().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'teacher' }));
+                    break;
+                    
+                case 'title':
+                    // Suche nach Titel (Bücher und Kurse)
+                    const booksByTitle = allBooks.filter(book => 
+                        book.title.toLowerCase().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'book' }));
+                    
+                    const coursesByTitle = allCourses.filter(course => 
+                        course.name.toLowerCase().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'course' }));
+                    
+                    results = [...booksByTitle, ...coursesByTitle];
+                    break;
+                    
+                case 'author':
+                    // Suche nach Autor (nur Bücher)
+                    results = allBooks.filter(book => 
+                        book.author.toLowerCase().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'book' }));
+                    break;
+                    
+                case 'all':
+                default:
+                    // In allen Feldern suchen
+                    const allStudentsFiltered = allStudents.filter(student => 
+                        student.username.toLowerCase().includes(searchTerm) || 
+                        student.email.toLowerCase().includes(searchTerm) ||
+                        student.id.toString().includes(searchTerm) ||
+                        student.createdAt.toLowerCase().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'student' }));
+                    
+                    const allTeachersFiltered = allTeachers.filter(teacher => 
+                        teacher.firstName.toLowerCase().includes(searchTerm) || 
+                        teacher.lastName.toLowerCase().includes(searchTerm) ||
+                        teacher.subject.toLowerCase().includes(searchTerm) ||
+                        teacher.birthDate.toLowerCase().includes(searchTerm) ||
+                        teacher.id.toString().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'teacher' }));
+                    
+                    const allBooksFiltered = allBooks.filter(book => 
+                        book.title.toLowerCase().includes(searchTerm) || 
+                        book.author.toLowerCase().includes(searchTerm) ||
+                        book.description.toLowerCase().includes(searchTerm) ||
+                        book.id.toString().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'book' }));
+                    
+                    const allCoursesFiltered = allCourses.filter(course => 
+                        course.name.toLowerCase().includes(searchTerm) || 
+                        course.description.toLowerCase().includes(searchTerm) ||
+                        course.id.toString().includes(searchTerm)
+                    ).map(item => ({ ...item, type: 'course' }));
+                    
+                    results = [...allStudentsFiltered, ...allTeachersFiltered, ...allBooksFiltered, ...allCoursesFiltered];
+                    break;
+            }
+            
+            setSearchResults(results);
+        } catch (error) {
+            console.error('Fehler bei der Suche:', error);
+            showToast('Fehler bei der Suche. Bitte versuchen Sie es erneut.', 'error');
+            setSearchResults([]);
+        } finally {
+            setIsSearching(false);
+        }
+    };
 
     const handleLogout = () => {
         localStorage.removeItem('adminToken');
@@ -892,7 +1176,10 @@ function AdminDashboard() {
 
                     <button
                         className={`admin-nav-item ${activeView === 'students' ? 'active' : ''}`}
-                        onClick={() => setActiveView('students')}
+                        onClick={() => {
+                            setActiveView('students');
+                            resetSearch();
+                        }}
                     >
                         <img src={lernIcon} alt="Studenten" className="admin-nav-icon-img" />
                         Studenten
@@ -900,7 +1187,10 @@ function AdminDashboard() {
 
                     <button
                         className={`admin-nav-item ${activeView === 'teachers' ? 'active' : ''}`}
-                        onClick={() => setActiveView('teachers')}
+                        onClick={() => {
+                            setActiveView('teachers');
+                            resetSearch();
+                        }}
                     >
                         <img src={kroneIcon} alt="Dozenten" className="admin-nav-icon-img" />
                         Dozenten
@@ -908,7 +1198,10 @@ function AdminDashboard() {
 
                     <button
                         className={`admin-nav-item ${activeView === 'courses' ? 'active' : ''}`}
-                        onClick={() => setActiveView('courses')}
+                        onClick={() => {
+                            setActiveView('courses');
+                            resetSearch();
+                        }}
                     >
                         <img src={kurseIcon} alt="Kurse" className="admin-nav-icon-img" />
                         Kurse
@@ -1028,20 +1321,32 @@ function AdminDashboard() {
             {/* Main Content */}
             <main className="admin-main-content">
                 <header className="admin-content-header">
-                    <h2 className="admin-content-title">
-                        {activeView === 'overview' && 'Dashboard Übersicht'}
-                        {activeView === 'students' && 'Studentenverwaltung'}
-                        {activeView === 'teachers' && 'Dozentenverwaltung'}
-                        {activeView === 'courses' && 'Kursverwaltung'}
-                        {activeView === 'enrollments' && 'Einschreibungen'}
-                        {activeView === 'certificates' && 'Zertifikate'}
-                        {activeView === 'books' && 'Books and Scripts'}
-                        {activeView === 'settings' && 'Einstellungen'}
-                    </h2>
+                    <div className="admin-header-top">
+                        <h2 className="admin-content-title">
+                            {activeView === 'overview' && 'Dashboard Übersicht'}
+                            {activeView === 'students' && 'Studentenverwaltung'}
+                            {activeView === 'teachers' && 'Dozentenverwaltung'}
+                            {activeView === 'courses' && 'Kursverwaltung'}
+                            {activeView === 'enrollments' && 'Einschreibungen'}
+                            {activeView === 'certificates' && 'Zertifikate'}
+                            {activeView === 'books' && 'Books and Scripts'}
+                            {activeView === 'settings' && 'Einstellungen'}
+                        </h2>
+                    </div>
+                    <SearchComponent onSearch={handleSearch} ref={searchComponentRef} />
                 </header>
 
                 <div className="admin-content-body">
-                    {activeView === 'books' && (
+                    {hasSearched ? (
+                        <SearchResults 
+                            results={searchResults} 
+                            isLoading={isSearching} 
+                            filter={searchFilter}
+                            onReset={resetSearch} 
+                        />
+                    ) : (
+                        <>
+                        {activeView === 'books' && (
                         <div className="admin-books-section">
                             <div className="admin-section-header">
                                 <h3>Bücher und Skripte Verwaltung</h3>
@@ -2024,6 +2329,8 @@ function AdminDashboard() {
                         <div className="admin-section">
                             <p className="admin-placeholder">Einstellungen werden hier angezeigt...</p>
                         </div>
+                    )}
+                        </>
                     )}
                 </div>
             </main>

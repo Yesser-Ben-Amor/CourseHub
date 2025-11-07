@@ -121,6 +121,102 @@
     margin-bottom: 2rem;
 }
 
+.admin-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+/* Suchergebnisse Stile */
+.search-results-container {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.search-results-title {
+    font-size: 1.2rem;
+    color: #c9d1d9;
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #30363d;
+}
+
+.search-loading {
+    text-align: center;
+    padding: 40px;
+    color: #8b949e;
+    font-size: 1rem;
+}
+
+.search-no-results {
+    text-align: center;
+    padding: 40px;
+    color: #8b949e;
+    font-size: 1rem;
+    background-color: #0d1117;
+    border-radius: 6px;
+}
+
+.search-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.search-result-item:hover {
+    transform: translateY(-2px);
+    border-color: #58a6ff;
+}
+
+.search-result-icon {
+    font-size: 1.8rem;
+    margin-right: 15px;
+    color: #58a6ff;
+}
+
+.search-result-details h4 {
+    margin: 0 0 5px 0;
+    color: #c9d1d9;
+    font-size: 1.1rem;
+}
+
+.search-result-details p {
+    margin: 0;
+    color: #8b949e;
+    font-size: 0.9rem;
+}
+
+.search-clear-button {
+    margin-top: 20px;
+    padding: 8px 16px;
+    background-color: #21262d;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.search-clear-button:hover {
+    background-color: #30363d;
+}
+
 .admin-content-title {
     font-size: 2rem;
     font-weight: 300;
