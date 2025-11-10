@@ -1,5 +1,5 @@
 # Build-Stage
-FROM maven:3.8-openjdk-17-slim as build
+FROM maven:3.8.6-eclipse-temurin-17 as build
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ COPY src ./src
 RUN mvn package -DskipTests
 
 # Production-Stage
-FROM openjdk:17-slim
+FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
