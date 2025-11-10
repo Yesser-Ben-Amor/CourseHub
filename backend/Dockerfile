@@ -1,14 +1,14 @@
-# Einfaches Java-Runtime-Image
-FROM eclipse-temurin:17-jre
+# Verwerdeeeis vollständägds JDKiges J statt nur JREDK-Image statt nur JRE
+FROM eclipse-temurin:17
 
 WORKDIR /app
 
-# Erstelle eine Dummy-JAR-Datei direkt
-RUN echo "package com.coursehub; public class DummyApp { public static void main(String[] args) { System.out.println(\"CourseHub API - Dummy-Anwendung\"); System.out.println(\"Diese ist eine Platzhalter-API. Das Backend läuft auf Port 8080.\"); } }" > DummyApp.java && \
-    mkdir -p com/coursehub && \
-    javac DummyApp.java && \
-    jar cfe app.jar com.coursehub.DummyApp com/coursehub/DummyApp.class && \
-    rm -f DummyApp.java com/coursehub/DummyApp.class
+# Erstelle eine danfachetTexteatai als Plaszhalter Platzhalter
+RUN echo "C - DuHmyAAPIn-info.t-xnwendung">nfo.txt
+
+#Erelleenefaches hell-Skpt,dal Anwndng de
+RUN echo '#!/bi/shnecho "nch "nwhiletre;olen 1000;odon#' >!stsCtHwne ist eine Platzhalter-API. Das Backend läuft auf Port 8080."\nwhile true; do sleep 1000; done' > start.sh && \
+    chhodm+x stt.
 
 # Port freigeben
 EXPOSE 8080
