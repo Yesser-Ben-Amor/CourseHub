@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './Library.css';
@@ -18,6 +18,7 @@ const Library: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+    const [searchTerm, setSearchTerm] = useState<string>('');
 
     useEffect(() => {
         loadBooks();
@@ -48,6 +49,29 @@ const Library: React.FC = () => {
     const closeBookDetails = () => {
         setSelectedBook(null);
     };
+    
+    // Gefilterte Bücherliste mit Regex-Suche
+    const filteredBooks = useMemo(() => {
+        if (searchTerm.length < 3) return books;
+        
+        try {
+            // Erstelle ein Regex-Pattern aus dem Suchbegriff (case-insensitive)
+            const regex = new RegExp(searchTerm, 'i');
+            
+            return books.filter(book => 
+                regex.test(book.title) || 
+                regex.test(book.author) || 
+                regex.test(book.description)
+            );
+        } catch (e) {
+            // Falls der Suchbegriff ungültiges Regex enthält
+            return books.filter(book => 
+                book.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                book.author.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                book.description.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+    }, [books, searchTerm]);
 
     if (loading) {
         return <div className="library-loading">Bücher werden geladen...</div>;
@@ -69,14 +93,36 @@ const Library: React.FC = () => {
                 <h1 className="library-title">Bibliothek</h1>
             </div>
             <p className="library-subtitle">Entdecken Sie unsere Sammlung an Büchern und Skripten</p>
+            
+            <div className="library-search-container">
+                <input
+                    type="text"
+                    className="library-search-input"
+                    placeholder="Nach Büchern suchen (min. 3 Zeichen)..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm.length > 0 && (
+                    <button 
+                        className="library-search-clear" 
+                        onClick={() => setSearchTerm('')}
+                    >
+                        &times;
+                    </button>
+                )}
+            </div>
 
             {books.length === 0 ? (
                 <div className="library-empty">
                     <p>Keine Bücher verfügbar.</p>
                 </div>
+            ) : filteredBooks.length === 0 ? (
+                <div className="library-empty">
+                    <p>Keine Bücher gefunden, die Ihren Suchkriterien entsprechen.</p>
+                </div>
             ) : (
                 <div className="library-grid">
-                    {books.map(book => (
+                    {filteredBooks.map(book => (
                         <div
                             key={book.id}
                             className="library-book-card"

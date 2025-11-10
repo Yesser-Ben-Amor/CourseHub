@@ -52,6 +52,10 @@ function Campus() {
     const [selectedPath, setSelectedPath] = useState<string | null>(null);
     const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
     const [enrolling, setEnrolling] = useState(false);
+    const [showCalendar, setShowCalendar] = useState(false);
+    const [showMessages, setShowMessages] = useState(false);
+    const [messages, setMessages] = useState<{id: number, sender: string, content: string, date: string, read: boolean}[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
     const [stats, setStats] = useState<DashboardStats>({
         totalEnrollments: 0,
         averageProgress: 0,
@@ -59,6 +63,57 @@ function Campus() {
         lastActivity: null
     });
 
+    // Funktion zum Laden der Nachrichten
+    const loadMessages = (userId: number) => {
+        // In einer echten Anwendung würden wir hier eine API-Anfrage stellen
+        // Für dieses Beispiel verwenden wir Mockdaten
+        
+        // Willkommensnachricht hinzufügen
+        const welcomeMessage = {
+            id: 1,
+            sender: 'System',
+            content: 'Willkommen zurück bei CourseHub! Wir freuen uns, dass Sie wieder da sind.',
+            date: new Date().toISOString(),
+            read: false
+        };
+        
+        // Admin-Nachricht (nur als Beispiel)
+        const adminMessage = {
+            id: 2,
+            sender: 'Admin',
+            content: 'Hallo! Wir haben neue Kurse hinzugefügt. Schauen Sie sich diese an!',
+            date: new Date(Date.now() - 86400000).toISOString(), // Gestern
+            read: false
+        };
+        
+        const mockMessages = [welcomeMessage, adminMessage];
+        setMessages(mockMessages);
+        
+        // Ungelesene Nachrichten zählen
+        const unread = mockMessages.filter(msg => !msg.read).length;
+        setUnreadCount(unread);
+    };
+    
+    // Funktion zum Markieren einer Nachricht als gelesen
+    const markAsRead = (messageId: number) => {
+        setMessages(prevMessages => 
+            prevMessages.map(msg => 
+                msg.id === messageId ? {...msg, read: true} : msg
+            )
+        );
+        
+        // Ungelesene Nachrichten neu zählen
+        setUnreadCount(prev => Math.max(0, prev - 1));
+    };
+    
+    // Funktion zum Markieren aller Nachrichten als gelesen
+    const markAllAsRead = () => {
+        setMessages(prevMessages => 
+            prevMessages.map(msg => ({...msg, read: true}))
+        );
+        setUnreadCount(0);
+    };
+    
     useEffect(() => {
         // Prüfe ob Token in URL Query Parameters (OAuth2 Redirect)
         const urlToken = searchParams.get('token');
@@ -117,6 +172,7 @@ function Campus() {
             // Lade Kurse vom Backend
             loadCourses();
             loadStats(userData.id);
+            loadMessages(userData.id);
         } catch (error) {
             console.error('Error parsing user data:', error);
             navigate('/');
@@ -287,9 +343,35 @@ function Campus() {
                         >
                             📚 Bibliothek
                         </button>
-                        <a href="#" className="nav-link">Meine Kurse</a>
-                        <a href="#" className="nav-link">Kalender</a>
-                        <a href="#" className="nav-link">Nachrichten</a>
+                        <button 
+                            onClick={() => navigate('/my-courses')} 
+                            className="nav-link nav-button nav-link-with-badge"
+                        >
+                            📚 Meine Kurse
+                            {stats.totalEnrollments > 0 && (
+                                <span className="nav-badge">{stats.totalEnrollments}</span>
+                            )}
+                        </button>
+                        <button 
+                            onClick={() => setShowCalendar(true)} 
+                            className="nav-link nav-button"
+                        >
+                            📅 Kalender
+                        </button>
+                        <button 
+                            onClick={() => {
+                                setShowMessages(true);
+                                if (unreadCount > 0) {
+                                    markAllAsRead();
+                                }
+                            }} 
+                            className="nav-link nav-button nav-link-with-badge"
+                        >
+                            📬 Nachrichten
+                            {unreadCount > 0 && (
+                                <span className="nav-badge">{unreadCount}</span>
+                            )}
+                        </button>
                     </nav>
                     <div className="header-user">
                         <div className="user-info">
@@ -852,6 +934,123 @@ function Campus() {
                     boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
                 }}>
                     {toast.message}
+                </div>
+            )}
+            
+            {/* Nachrichten Dialog */}
+            {showMessages && (
+                <div className="modal-overlay" onClick={() => setShowMessages(false)}>
+                    <div className="messages-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="messages-header">
+                            <h2>Nachrichten</h2>
+                            <button className="modal-close" onClick={() => setShowMessages(false)}>&times;</button>
+                        </div>
+                        <div className="messages-body">
+                            {messages.length === 0 ? (
+                                <div className="no-messages">Keine Nachrichten vorhanden</div>
+                            ) : (
+                                <div className="message-list">
+                                    {messages.map(message => (
+                                        <div 
+                                            key={message.id} 
+                                            className={`message-item ${!message.read ? 'unread' : ''}`}
+                                            onClick={() => markAsRead(message.id)}
+                                        >
+                                            <div className="message-sender">{message.sender}</div>
+                                            <div className="message-content">{message.content}</div>
+                                            <div className="message-date">
+                                                {new Date(message.date).toLocaleDateString('de-DE', {
+                                                    day: '2-digit',
+                                                    month: 'short',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </div>
+                                            {!message.read && <div className="unread-indicator"></div>}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {/* Kalender Dialog */}
+            {showCalendar && (
+                <div className="modal-overlay" onClick={() => setShowCalendar(false)}>
+                    <div className="calendar-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="calendar-header">
+                            <h2>Kurskalender</h2>
+                            <button className="modal-close" onClick={() => setShowCalendar(false)}>&times;</button>
+                        </div>
+                        <div className="calendar-body">
+                            <div className="calendar-month">
+                                <div className="calendar-month-header">
+                                    <button className="calendar-nav-btn">&lt;</button>
+                                    <h3>{new Date().toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}</h3>
+                                    <button className="calendar-nav-btn">&gt;</button>
+                                </div>
+                                <div className="calendar-weekdays">
+                                    {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(day => (
+                                        <div key={day} className="calendar-weekday">{day}</div>
+                                    ))}
+                                </div>
+                                <div className="calendar-days">
+                                    {Array.from({ length: 35 }, (_, i) => {
+                                        const day = i - 3; // Annahme: Monat beginnt am 4. Tag der Woche
+                                        const isCurrentMonth = day >= 0 && day < 30;
+                                        const isToday = day === new Date().getDate() - 1 && isCurrentMonth;
+                                        const hasEvent = [5, 12, 18, 25].includes(day);
+                                        
+                                        return (
+                                            <div 
+                                                key={i} 
+                                                className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${hasEvent ? 'has-event' : ''}`}
+                                            >
+                                                {isCurrentMonth ? day + 1 : ''}
+                                                {hasEvent && <div className="event-indicator"></div>}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            
+                            <div className="calendar-events">
+                                <h3>Anstehende Veranstaltungen</h3>
+                                <div className="event-list">
+                                    <div className="event-item">
+                                        <div className="event-date">6. Nov</div>
+                                        <div className="event-details">
+                                            <h4>DevOps Einführung</h4>
+                                            <p>10:00 - 12:00 Uhr</p>
+                                        </div>
+                                    </div>
+                                    <div className="event-item">
+                                        <div className="event-date">13. Nov</div>
+                                        <div className="event-details">
+                                            <h4>Webentwicklung Workshop</h4>
+                                            <p>14:00 - 16:30 Uhr</p>
+                                        </div>
+                                    </div>
+                                    <div className="event-item">
+                                        <div className="event-date">19. Nov</div>
+                                        <div className="event-details">
+                                            <h4>Datenbank-Design</h4>
+                                            <p>09:30 - 11:30 Uhr</p>
+                                        </div>
+                                    </div>
+                                    <div className="event-item">
+                                        <div className="event-date">26. Nov</div>
+                                        <div className="event-details">
+                                            <h4>Kubernetes Deep Dive</h4>
+                                            <p>13:00 - 15:00 Uhr</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

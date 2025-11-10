@@ -44,7 +44,59 @@ body{
 .library-subtitle {
     font-size: 1rem;
     color: #8b949e;
+    margin-bottom: 1rem;
+}
+
+.library-search-container {
+    position: relative;
     margin-bottom: 2rem;
+    width: 100%;
+    max-width: 600px;
+}
+
+.library-search-input {
+    width: 100%;
+    padding: 12px 40px 12px 16px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    background-color: #161b22;
+    color: #c9d1d9;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.library-search-input:focus {
+    outline: none;
+    border-color: #58a6ff;
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
+}
+
+.library-search-input::placeholder {
+    color: #8b949e;
+}
+
+.library-search-clear {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #8b949e;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.library-search-clear:hover {
+    background-color: #30363d;
+    color: #f85149;
 }
 
 .library-grid {
