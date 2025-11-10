@@ -7,7 +7,7 @@ WORKDIR /app
 RUN echo "Platzhalter für die JAR-Datei. Bitte bauen Sie die Anwendung lokal und kopieren Sie die JAR-Datei in den Container." > README.txt
 
 # Kopiere die JAR-Datei, falls vorhanden (muss manuell hinzugefügt werden)
-COPY target/*.jar app.jar 2>/dev/null || echo "Keine JAR-Datei gefunden. Bitte bauen Sie die Anwendung lokal."
+COPY target/*.jar app.jar 2>/dev/null || true
 
 # Fallback-JAR erstellen, falls keine vorhanden ist
 RUN if [ ! -f app.jar ]; then \
