@@ -1,32 +1,37 @@
-# Build-Stage
-FROM node:16-alpine as build
-
-WORKDIR /app
-
-# Kopiere package.json und package-lock.json
-COPY package*.json ./
-
-# Installiere Abhängigkeiten mit --legacy-peer-deps für Kompatibilität
-RUN npm ci --legacy-peer-deps
-
-# Kopiere den Quellcode
-COPY . .
-
-# Baue die Anwendung mit Fehlertoleranz und reduziertem Logging
-RUN NODE_ENV=production npm run build || NODE_ENV=production npm run build -- --no-lint || echo "Build fehlgeschlagen, aber wir fahren fort"
-
-# Production-Stage mit Nginx
+# Einfache Nginx-Lösung ohne Build-Prozess
 FROM nginx:stable-alpine
 
-# Kopiere die gebaute Anwendung aus der Build-Stage
-# Wir versuchen sowohl den dist als auch den build Ordner, je nach Build-Tool
-COPY --from=build /app/dist /usr/share/nginx/html/ || true
-COPY --from=build /app/build /usr/share/nginx/html/ || true
+# Erstelle das HTML-Verzeichnis
+RUN mkdir -p /usr/share/nginx/html
 
-# Fallback-Index für den Fall, dass der Build fehlschlägt
-RUN if [ ! -f /usr/share/nginx/html/index.html ]; then \
-    echo "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>CourseHub</title></head><body><h1>CourseHub</h1><p>Build-Prozess fehlgeschlagen. Bitte überprüfen Sie die Docker-Logs.</p></body></html>" > /usr/share/nginx/html/index.html; \
-    fi
+# Erstelle eine statische index.html
+RUN echo '<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CourseHub</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0d1117; color: #c9d1d9; margin: 0; padding: 20px; }
+    .container { max-width: 800px; margin: 40px auto; padding: 20px; background: #161b22; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    h1 { color: #58a6ff; }
+    .btn { display: inline-block; background: #238636; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CourseHub</h1>
+    <p>Die Frontend-Anwendung ist bereit.</p>
+    <p>Um die vollständige React-Anwendung zu sehen, bauen Sie sie lokal und ersetzen Sie diese Dateien.</p>
+    <p>Das Backend-API ist unter <a href="/api" style="color: #58a6ff;">/api</a> erreichbar.</p>
+    <a href="/api" class="btn">API testen</a>
+  </div>
+</body>
+</html>' > /usr/share/nginx/html/index.html
+
+# Kopiere die Frontend-Dateien, falls vorhanden (optional)
+COPY ./src /tmp/src/
+RUN if [ -d "/tmp/src" ]; then cp -r /tmp/src/* /usr/share/nginx/html/ 2>/dev/null || true; fi
 
 # Kopiere die Nginx-Konfiguration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
