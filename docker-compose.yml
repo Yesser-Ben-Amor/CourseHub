@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - coursehub-network
+    restart: unless-stopped
+
+  # Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/coursehub?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=coursehub
+      - SPRING_DATASOURCE_PASSWORD=password
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - coursehub-network
+    restart: unless-stopped
+
+  # Datenbank Service
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_DATABASE=coursehub
+      - MYSQL_USER=coursehub
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - coursehub-network
+    restart: unless-stopped
+
+# Volumes für persistente Daten
+volumes:
+  mysql-data:
+
+# Netzwerk für die Kommunikation zwischen den Services
+networks:
+  coursehub-network:
+    driver: bridge
