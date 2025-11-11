@@ -7,9 +7,6 @@ RUN mkdir -p /usr/share/nginx/html
 # Kopiere die Nginx-Konfiguration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Kopiere die index.html, falls vorhanden
-COPY index.html /usr/share/nginx/html/ 2>/dev/null || true
-
 # Erstelle eine einfache index.html
 RUN echo '<!DOCTYPE html><html><head><title>CourseHub</title></head><body><h1>CourseHub</h1><p>Die Anwendung ist bereit.</p><p><a href="/api.json">API testen</a></p><p><a href="/api/courses">Kurse anzeigen</a></p></body></html>' > /usr/share/nginx/html/index.html
 
