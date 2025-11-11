@@ -71,7 +71,7 @@ Für die lokale Entwicklung ohne Docker:
 ```bash
 cd frontend
 npm install
-npm start
+npm run dev
 ```
 
 #### Backend
@@ -83,6 +83,8 @@ cd backend
 
 ### Mit Docker
 
+#### Produktionsumgebung
+
 Änderungen an den Dockerfiles oder der docker-compose.yml erfordern einen Neustart der Container:
 
 ```bash
@@ -90,6 +92,30 @@ docker-compose down
 docker-compose build
 docker-compose up -d
 ```
+
+#### Entwicklungsumgebung mit Hot-Reloading
+
+Für die Entwicklung mit Hot-Reloading verwenden Sie die Entwicklungsumgebung:
+
+```bash
+# Erstellen Sie die Entwicklungscontainer
+docker-compose -f docker-compose.dev.yml build
+
+# Starten Sie die Entwicklungsumgebung
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+Die Entwicklungsumgebung bietet folgende Vorteile:
+
+- **Frontend**: Vite-Entwicklungsserver mit Hot-Reloading auf Port 5173
+- **Backend**: Spring Boot mit automatischem Neustart bei Änderungen
+- **Volumes**: Änderungen an lokalen Dateien werden automatisch in die Container übernommen
+
+Zugriff auf die Entwicklungsumgebung:
+
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8080
+- Datenbank: localhost:3307
 
 ## Datenbank
 
