@@ -1,7 +1,7 @@
 # Multi-Stage Build für Spring Boot-Backend
 
 # Build-Stage
-FROM maven:3.9.6-eclipse-temurin-21 AS build
+FROM maven:3.8.7-eclipse-temurin-17 AS build
 
 # Arbeitsverzeichnis festlegen
 WORKDIR /app
