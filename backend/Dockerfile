@@ -10,9 +10,6 @@ RUN mvn dependency:go-offline -B
 
 # Kopiere den Quellcode
 COPY src ./src
-COPY .mvn ./.mvn
-COPY mvnw .
-COPY mvnw.cmd .
 
 # Port freigeben
 EXPOSE 8080
