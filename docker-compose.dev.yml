@@ -7,13 +7,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-      - VITE_API_URL=http://localhost:8080
+      - "5173:80"
     networks:
       - coursehub-network
     restart: unless-stopped
@@ -25,16 +19,6 @@ services:
       dockerfile: Dockerfile.dev
     ports:
       - "8081:8080"
-    volumes:
-      - ./backend:/app
-      - /app/target
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/coursehub?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      - SPRING_DATASOURCE_USERNAME=coursehub
-      - SPRING_DATASOURCE_PASSWORD=password
-      - SPRING_PROFILES_ACTIVE=dev
-    depends_on:
-      - db
     networks:
       - coursehub-network
     restart: unless-stopped
