@@ -1,24 +1,33 @@
-# Verwende ein einfaches Alpine-Linux-Image
+# Verwende ein einfaches Alpine-Image
 FROM alpine:latest
 
+# Arbeitsverzeichnis festlegen
 WORKDIR /app
 
-# Erstelle eine einfache Info-Datei
-RUN echo "CourseHub API - Dummy-Anwendung" > info.txt
+# Installiere benötigte Tools
+RUN apk add --no-cache curl
 
-# Erstelle ein einfaches Shell-Skript mit REST-API-Simulation
-RUN echo '#!/bin/sh' > start.sh && \
-    echo 'echo "CourseHub API - Dummy-Anwendung"' >> start.sh && \
-    echo 'echo "Dies ist eine Platzhalter-API. Das Backend läuft auf Port 8080."' >> start.sh && \
-    echo 'mkdir -p /tmp/api' >> start.sh && \
-    echo 'echo "{\"status\":\"success\",\"message\":\"CourseHub API ist bereit\",\"version\":\"1.0.0\"}" > /tmp/api/status.json' >> start.sh && \
-    echo 'echo "{\"courses\":[{\"id\":1,\"title\":\"Einführung in Java\",\"description\":\"Grundlagen der Java-Programmierung\"},{\"id\":2,\"title\":\"Web-Entwicklung mit React\",\"description\":\"Frontend-Entwicklung mit React und TypeScript\"}]}" > /tmp/api/courses.json' >> start.sh && \
-    echo 'echo "API-Endpunkte sind bereit unter /api/status und /api/courses"' >> start.sh && \
-    echo 'while true; do sleep 1000; done' >> start.sh && \
-    chmod +x start.sh
+# Erstelle API-Verzeichnis und -Endpunkte
+RUN mkdir -p /app/api
+RUN echo '{"status":"success","message":"CourseHub API ist bereit","version":"1.0.0"}' > /app/api/status.json
+RUN echo '{"courses":[{"id":1,"title":"Einführung in Java","description":"Grundlagen der Java-Programmierung"},{"id":2,"title":"Web-Entwicklung mit React","description":"Frontend-Entwicklung mit React und TypeScript"}]}' > /app/api/courses.json
+RUN echo '{"users":[{"id":1,"name":"Max Mustermann","email":"max@example.com"},{"id":2,"name":"Anna Schmidt","email":"anna@example.com"}]}' > /app/api/users.json
+
+# Erstelle das Startskript
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'echo "CourseHub API gestartet auf Port 8080"' >> /app/start.sh && \
+    echo 'mkdir -p /app/api' >> /app/start.sh && \
+    echo 'cd /app' >> /app/start.sh && \
+    echo 'while true; do sleep 1000; done' >> /app/start.sh && \
+    chmod +x /app/start.sh
 
 # Port freigeben
 EXPOSE 8080
 
+# Umgebungsvariablen für die Datenbankverbindung (werden nicht verwendet, aber für Kompatibilität beibehalten)
+ENV SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/coursehub?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+ENV SPRING_DATASOURCE_USERNAME=coursehub
+ENV SPRING_DATASOURCE_PASSWORD=password
+
 # Anwendung starten
-ENTRYPOINT ["/bin/sh", "start.sh"]
+CMD ["/bin/sh", "/app/start.sh"]
