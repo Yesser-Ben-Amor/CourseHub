@@ -1,5 +1,7 @@
-# Einfaches Maven-Image für Spring Boot-Entwicklung
-FROM maven:3.8.7-eclipse-temurin-17
+# Multi-Stage Build für Spring Boot-Backend
+
+# Build-Stage
+FROM maven:3.8.7-eclipse-temurin-17 AS build
 
 # Arbeitsverzeichnis festlegen
 WORKDIR /app
@@ -7,6 +9,18 @@ WORKDIR /app
 # Kopiere pom.xml und den Quellcode
 COPY pom.xml .
 COPY src ./src
+
+# Baue die Anwendung ohne Tests
+RUN mvn clean package -DskipTests
+
+# Runtime-Stage
+FROM eclipse-temurin:17-jre-alpine
+
+# Arbeitsverzeichnis festlegen
+WORKDIR /app
+
+# Kopiere die JAR-Datei aus der Build-Stage
+COPY --from=build /app/target/*.jar app.jar
 
 # Port freigeben
 EXPOSE 8080
@@ -17,8 +31,5 @@ ENV SPRING_DATASOURCE_USERNAME=coursehub
 ENV SPRING_DATASOURCE_PASSWORD=password
 ENV SPRING_PROFILES_ACTIVE=dev
 
-# Maven-Cache-Verzeichnis erstellen
-RUN mkdir -p /root/.m2
-
-# Anwendung im Entwicklungsmodus starten
-CMD ["mvn", "spring-boot:run", "-Dspring-boot.run.profiles=dev"]
+# Anwendung starten
+CMD ["java", "-jar", "app.jar"]
