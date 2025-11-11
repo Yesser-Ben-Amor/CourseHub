@@ -40,11 +40,7 @@ ADD config/ /app/config/
 # Port freigeben
 EXPOSE 8080
 
-# Umgebungsvariablen für die Datenbankverbindung
-ENV SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/coursehub?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-ENV SPRING_DATASOURCE_USERNAME=coursehub
-ENV SPRING_DATASOURCE_PASSWORD=password
-ENV SPRING_PROFILES_ACTIVE=dev
+
 
 # Anwendung starten
 CMD ["java", "-jar", "app.jar"]
