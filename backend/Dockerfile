@@ -1,20 +1,35 @@
-# Verwende ein einfaches Alpine-Linux-Image
-FROM alpine:latest
+# Multi-Stage Build für Spring Boot-Backend
 
+# Build-Stage
+FROM maven:3.8-openjdk-17 AS build
+
+# Arbeitsverzeichnis festlegen
 WORKDIR /app
 
-# Erstelle eine einfache Info-Datei
-RUN echo "CourseHub API - Dummy-Anwendung" > info.txt
+# Abhängigkeiten herunterladen
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
 
-# Erstelle ein einfaches Shell-Skript
-RUN echo '#!/bin/sh' > start.sh && \
-    echo 'echo "CourseHub API - Dummy-Anwendung"' >> start.sh && \
-    echo 'echo "Dies ist eine Platzhalter-API. Das Backend läuft auf Port 8080."' >> start.sh && \
-    echo 'while true; do sleep 1000; done' >> start.sh && \
-    chmod +x start.sh
+# Quellcode kopieren und bauen
+COPY src ./src
+RUN mvn package -DskipTests
+
+# Production-Stage
+FROM openjdk:17-jdk-slim
+
+# Arbeitsverzeichnis festlegen
+WORKDIR /app
+
+# JAR-Datei aus der Build-Stage kopieren
+COPY --from=build /app/target/*.jar app.jar
 
 # Port freigeben
 EXPOSE 8080
 
+# Umgebungsvariablen für die Datenbankverbindung
+ENV SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/coursehub?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+ENV SPRING_DATASOURCE_USERNAME=coursehub
+ENV SPRING_DATASOURCE_PASSWORD=password
+
 # Anwendung starten
-ENTRYPOINT ["/bin/sh", "start.sh"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -1,13 +1,31 @@
-# Einfache Nginx-Lösung ohne Build-Prozess
+# Multi-Stage Build für React-Frontend
+
+# Build-Stage
+FROM node:16-alpine AS build
+
+# Arbeitsverzeichnis festlegen
+WORKDIR /app
+
+# Abhängigkeiten installieren
+COPY package.json package-lock.json* ./
+RUN npm ci --legacy-peer-deps
+
+# Quellcode kopieren
+COPY . .
+
+# Anwendung bauen
+RUN npm run build
+
+# Production-Stage
 FROM nginx:alpine
 
-# Erstelle das HTML-Verzeichnis
-RUN mkdir -p /usr/share/nginx/html
+# Nginx-Konfiguration kopieren
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Erstelle eine einfache index.html
-RUN echo '<!DOCTYPE html><html><head><title>CourseHub</title></head><body><h1>CourseHub</h1><p>Die Anwendung ist bereit.</p><p><a href="/api.json">API testen</a></p></body></html>' > /usr/share/nginx/html/index.html
+# Build-Artefakte aus der Build-Stage kopieren
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Erstelle eine einfache API-JSON-Datei
+# Fallback API-JSON-Datei erstellen (falls die API nicht erreichbar ist)
 RUN echo '{"status":"success","message":"CourseHub API ist bereit","version":"1.0.0"}' > /usr/share/nginx/html/api.json
 
 # Port freigeben
