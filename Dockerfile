@@ -1,6 +1,3 @@
-
-
-
 # Multi-Stage Build für die gesamte CourseHub-Anwendung
 
 # Stage 1: Frontend bauen
@@ -33,9 +30,6 @@ COPY --from=backend-build /app/backend/target/*.jar app.jar
 # Frontend-Build in den statischen Ordner des Backends kopieren
 RUN mkdir -p /app/src/main/resources/static
 COPY --from=frontend-build /app/frontend/dist/ /app/src/main/resources/static/
-
-# Konfigurationsdateien hinzufügen (falls vorhanden)
-ADD config/ /app/config/
 
 # Port freigeben
 EXPOSE 8080
