@@ -11,5 +11,8 @@ RUN npm ci --legacy-peer-deps || npm ci
 # Port freigeben
 EXPOSE 5173
 
+# Umgebungsvariable für die API-URL setzen
+ENV VITE_API_URL=http://localhost:8081
+
 # Entwicklungsserver starten
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
