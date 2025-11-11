@@ -1,5 +1,5 @@
-# Verwende Maven mit OpenJDK 21
-FROM maven:3.8-openjdk-21-slim
+# Verwende Maven mit OpenJDK 17 (verfügbare Version)
+FROM maven:3.8.7-eclipse-temurin-17
 
 # Arbeitsverzeichnis festlegen
 WORKDIR /app

@@ -1,6 +1,6 @@
 # Development-Stage für React-Frontend mit Vite
 
-FROM node:18-alpine
+FROM node:18.17-alpine
 
 # Arbeitsverzeichnis festlegen
 WORKDIR /app
