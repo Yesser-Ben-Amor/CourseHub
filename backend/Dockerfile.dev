@@ -1,0 +1,15 @@
+# Dockerfile für die Backend-Entwicklung
+FROM maven:3.8-openjdk-17
+
+# Arbeitsverzeichnis festlegen
+WORKDIR /app
+
+# Abhängigkeiten herunterladen
+COPY pom.xml ./
+RUN mvn dependency:go-offline -B
+
+# Port freigeben
+EXPOSE 8080
+
+# Anwendung im Entwicklungsmodus starten
+CMD ["./mvnw", "spring-boot:run", "-Dspring-boot.run.profiles=dev"]

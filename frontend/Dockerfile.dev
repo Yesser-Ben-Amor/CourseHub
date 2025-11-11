@@ -1,0 +1,15 @@
+# Dockerfile für die Frontend-Entwicklung mit Vite
+FROM node:18-alpine
+
+# Arbeitsverzeichnis festlegen
+WORKDIR /app
+
+# Abhängigkeiten installieren
+COPY package.json package-lock.json* ./
+RUN npm ci --legacy-peer-deps || npm ci
+
+# Port freigeben
+EXPOSE 5173
+
+# Entwicklungsserver starten
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

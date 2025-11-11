@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Frontend Service für Entwicklung
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:8080
+    networks:
+      - coursehub-network
+    restart: unless-stopped
+
+  # Backend Service für Entwicklung
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+      - /app/target
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/coursehub?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=coursehub
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_PROFILES_ACTIVE=dev
+    depends_on:
+      - db
+    networks:
+      - coursehub-network
+    restart: unless-stopped
+
+  # Datenbank Service (gleich wie in der Hauptdatei)
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_DATABASE=coursehub
+      - MYSQL_USER=coursehub
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - coursehub-network
+    restart: unless-stopped
+
+# Volumes für persistente Daten
+volumes:
+  mysql-data:
+
+# Netzwerk für die Kommunikation zwischen den Services
+networks:
+  coursehub-network:
+    driver: bridge
