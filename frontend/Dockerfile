@@ -1,7 +1,7 @@
 # Multi-Stage Build für React-Frontend
 
 # Build-Stage
-FROM node:16-alpine AS build
+FROM node:18-alpine AS build
 
 # Arbeitsverzeichnis festlegen
 WORKDIR /app
