@@ -7,17 +7,16 @@ RUN mkdir -p /usr/share/nginx/html
 # Kopiere die Nginx-Konfiguration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Kopiere die statischen Dateien (falls vorhanden)
-COPY ./src /usr/share/nginx/html/
-COPY ./public /usr/share/nginx/html/
+# Kopiere die index.html, falls vorhanden
+COPY index.html /usr/share/nginx/html/ 2>/dev/null || true
 
-# Erstelle eine einfache index.html, falls keine vorhanden ist
-RUN if [ ! -f /usr/share/nginx/html/index.html ]; then \
-    echo '<!DOCTYPE html><html><head><title>CourseHub</title></head><body><h1>CourseHub</h1><p>Die Anwendung ist bereit.</p><p><a href="/api.json">API testen</a></p></body></html>' > /usr/share/nginx/html/index.html; \
-    fi
+# Erstelle eine einfache index.html
+RUN echo '<!DOCTYPE html><html><head><title>CourseHub</title></head><body><h1>CourseHub</h1><p>Die Anwendung ist bereit.</p><p><a href="/api.json">API testen</a></p><p><a href="/api/courses">Kurse anzeigen</a></p></body></html>' > /usr/share/nginx/html/index.html
 
-# Erstelle eine API-JSON-Datei
+# Erstelle API-JSON-Dateien
+RUN mkdir -p /usr/share/nginx/html/api
 RUN echo '{"status":"success","message":"CourseHub API ist bereit","version":"1.0.0"}' > /usr/share/nginx/html/api.json
+RUN echo '{"courses":[{"id":1,"title":"Einführung in Java","description":"Grundlagen der Java-Programmierung"},{"id":2,"title":"Web-Entwicklung mit React","description":"Frontend-Entwicklung mit React und TypeScript"}]}' > /usr/share/nginx/html/api/courses
 
 # Port freigeben
 EXPOSE 80
