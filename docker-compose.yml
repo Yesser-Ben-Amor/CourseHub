@@ -23,8 +23,11 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/coursehub?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=coursehub
       - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_PROFILES_ACTIVE=dev
     ports:
       - "8080:8080"
+    volumes:
+      - ~/.m2:/root/.m2
     depends_on:
       - db
     networks:
