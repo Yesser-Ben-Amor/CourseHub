@@ -1,7 +1,10 @@
 package org.example.backend.service;
 
+import org.example.backend.entity.CourseEntity;
 import org.example.backend.entity.SeminarEntity;
+import org.example.backend.repository.CourseRepository;
 import org.example.backend.repository.SeminarRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,9 +16,11 @@ import java.util.Optional;
 public class SeminarService {
 
     private final SeminarRepository seminarRepository;
+    private final CourseRepository courseRepository;
 
-    public SeminarService(SeminarRepository seminarRepository) {
+    public SeminarService(SeminarRepository seminarRepository, CourseRepository courseRepository) {
         this.seminarRepository = seminarRepository;
+        this.courseRepository = courseRepository;
         // Erstelle Demo-Seminar beim Start
         createDemoSeminarIfNotExists();
     }
@@ -32,8 +37,37 @@ public class SeminarService {
                 }
             }
             
-            // Prüfe ob bereits Seminare existieren
-            if (seminarRepository.count() == 0) {
+            // Hole alle Kurse aus der Datenbank
+            List<CourseEntity> allCourses = courseRepository.findAll();
+            
+            // Erstelle für jeden Kurs ein Seminar, falls noch keines existiert
+            for (CourseEntity course : allCourses) {
+                // Prüfe, ob bereits ein Seminar für diesen Kurs existiert (basierend auf Titel)
+                String seminarTitle = course.getName() + " Live-Seminar";
+                boolean seminarExists = existingSeminars.stream()
+                    .anyMatch(s -> s.getTitle().equals(seminarTitle));
+                
+                if (!seminarExists) {
+                    SeminarEntity newSeminar = new SeminarEntity();
+                    newSeminar.setTitle(seminarTitle);
+                    newSeminar.setDescription("Live-Seminar für den Kurs: " + course.getName());
+                    newSeminar.setInstructorName("dozent");
+                    newSeminar.setStartTime(LocalDateTime.now());
+                    newSeminar.setEndTime(LocalDateTime.now().plusHours(2));
+                    newSeminar.setMaxParticipants(50);
+                    newSeminar.setCurrentParticipants(0);
+                    newSeminar.setMeetingUrl("https://demo.zoom.us/meeting");
+                    newSeminar.setMeetingId("123-456-789");
+                    newSeminar.setMeetingPassword("demo123");
+                    newSeminar.setStatus(SeminarEntity.SeminarStatus.LIVE);
+                    
+                    seminarRepository.save(newSeminar);
+                    System.out.println("Seminar erstellt für Kurs '" + course.getName() + "' mit ID: " + newSeminar.getId());
+                }
+            }
+            
+            // Erstelle ein Default-Seminar, falls keine Kurse existieren
+            if (allCourses.isEmpty() && seminarRepository.count() == 0) {
                 SeminarEntity demoSeminar = new SeminarEntity();
                 demoSeminar.setTitle("Demo Live-Seminar");
                 demoSeminar.setDescription("Ein Demo-Seminar für Testzwecke");
@@ -51,7 +85,8 @@ public class SeminarService {
                 System.out.println("Demo-Seminar erstellt mit ID: " + demoSeminar.getId());
             }
         } catch (Exception e) {
-            System.err.println("Fehler beim Erstellen des Demo-Seminars: " + e.getMessage());
+            System.err.println("Fehler beim Erstellen der Seminare: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
