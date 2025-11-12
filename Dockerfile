@@ -1,13 +1,17 @@
 # Multi-Stage Build für die gesamte CourseHub-Anwendung
 
 # Stage 1: Frontend bauen
-FROM node:18.17-alpine AS frontend-build
+FROM node:16-alpine AS frontend-build
 WORKDIR /app/frontend
 # Verwende ADD für package.json-Dateien
 ADD frontend/package*.json ./
 RUN npm ci --legacy-peer-deps || npm ci || npm install
 # Verwende ADD für den gesamten Frontend-Quellcode
 ADD frontend/ ./
+# Konfiguriere die API-URL für das Frontend
+ENV VITE_API_URL=http://localhost:8080/api
+ENV NODE_OPTIONS=--openssl-legacy-provider
+# Baue das Frontend
 RUN npm run build
 
 # Stage 2: Backend bauen
